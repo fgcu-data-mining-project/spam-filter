@@ -27,6 +27,8 @@ public class Classify implements Runnable {
     private String algorithm = "KNN";
 
     // TODO Add option for setting k with the default of 2.
+    @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
+    private int kforKNN = 2;
 
     public static void main(String[] args) {
         CommandLine.run(new Classify(), args);
@@ -39,6 +41,9 @@ public class Classify implements Runnable {
         if (verbose.length > 0) {
             System.out.println("Input path: " + inputPath.toString());
             System.out.println("Algorithm: " + algorithm);
+            if (algorithm.equals("KNN")) {
+                System.out.println("K: " + kforKNN);
+            }
         }
 
         // If very verbose, print paths to all files in input path directory.
@@ -61,6 +66,15 @@ public class Classify implements Runnable {
 
 
         // TODO Read data based on args.
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputPath)) {
+
+            // TODO Have handle for files, now do something with them...
+
+        } catch (IOException | DirectoryIteratorException ex) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(ex);
+        }
 
         // TODO Clean/prepare data.
 
