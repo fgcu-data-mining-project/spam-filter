@@ -13,20 +13,19 @@ Two core classification algorithms are provided: K-Nearest Neighbors (KNN) and N
 The general usage of the commandline application is:
 
 ```
-java classify ALGORITHM [OPTIONS] PATH_TO_ DATA_DIR
+java Classify [-hV] [-v]... [-a=<algorithm>] PATH
 ```
 
 To classify messages using KNN with default K of 2:
 
-
 ```
-java classify knn ./data
+java Classify -a knn ./data
 ```
 
 To classify messages using Naive Bayes:
 
 ```
-java classify NB ~/MyHome/downloads/data
+java Classify -a NB ~/MyHome/downloads/data
 ```
 
 ### Experimental Algorithms

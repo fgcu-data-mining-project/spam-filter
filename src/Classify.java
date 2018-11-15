@@ -26,6 +26,8 @@ public class Classify implements Runnable {
     @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO EXPERIMENTAL...")
     private String algorithm = "KNN";
 
+    // TODO Add option for setting k with the default of 2.
+
     public static void main(String[] args) {
         CommandLine.run(new Classify(), args);
     }
