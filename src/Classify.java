@@ -11,7 +11,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 
-@Command(name = "Email Classifier", mixinStandardHelpOptions = true,
+@Command(name = "Classify", mixinStandardHelpOptions = true,
         version = "Email Classifier 0.1.1")
 public class Classify implements Runnable {
 
