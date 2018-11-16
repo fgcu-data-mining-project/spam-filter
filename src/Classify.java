@@ -6,11 +6,14 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import static java.util.stream.Collectors.toList;
 
 
 @Command(name = "Classify", mixinStandardHelpOptions = true,
@@ -106,7 +109,7 @@ public class Classify implements Runnable {
         //    WRANGLE THE DATA    /
         //-----------------------+
 
-        // TODO Tokenize.
+        // Tokenize.
         // Populate tokenizedMessages ArrayList with tokenized messages.
         for (Message message : messages) {
             tokenizedMessages.add(Tokenizer.tokenize(message));
@@ -117,7 +120,24 @@ public class Classify implements Runnable {
         //    System.out.println(tkMessage);
         //}
 
-        // TODO Normalize.
+        // Normalize:
+        // - Covert to lowercase.
+        // - Remove stop words.
+        for (TokenizedMessage tkMessage : tokenizedMessages) {
+            tkMessage.subjectTokens = tkMessage.subjectTokens.stream()
+                    .map(String::toLowerCase)
+                    .collect(toList());
+
+            tkMessage.bodyTokens = tkMessage.bodyTokens.stream()
+                    .map(String::toLowerCase)
+                    .collect(toList());
+        }
+
+        // DEBUG
+        //for (TokenizedMessage tkMessage : tokenizedMessages) {
+        //    System.out.println(tkMessage);
+        //}
+
 
         // TODO Remove stopwords.
 
