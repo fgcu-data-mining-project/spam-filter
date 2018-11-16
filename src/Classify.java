@@ -5,8 +5,7 @@ import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -138,8 +137,44 @@ public class Classify implements Runnable {
         //    System.out.println(tkMessage);
         //}
 
-
         // TODO Remove stopwords.
+
+        // TODO Refer to list of top stop words?
+        String[] defaultStopWords = {"i", "a", "about", "an",
+                "are", "as", "at", "be", "by", "com", "for", "from", "how",
+                "in", "is", "it", "of", "on", "or", "that", "the", "this",
+                "to", "was", "what", "when", "where", "who", "will", "with"};
+        Set stopWords = new HashSet<>(Arrays.asList(defaultStopWords));
+
+        // TODO More efficient way to do this?
+        for (TokenizedMessage tkMessage : tokenizedMessages) {
+
+            int count = 0;
+            for (int i = 0; i < tkMessage.subjectTokens.size(); i++) {
+
+                if (stopWords.contains(tkMessage.subjectTokens.get(i))) {
+                    count++;
+                    // DEBUG
+                    //System.out.println("REMOVING: " + tkMessage.subjectTokens.get(i));
+                    tkMessage.subjectTokens.remove(i);
+                }
+            }
+            // DEBUG
+            //System.out.println("Remove " + count + " stopwords from subject.");
+
+            count = 0;
+            for (int i = 0; i < tkMessage.bodyTokens.size(); i++) {
+
+                if (stopWords.contains(tkMessage.bodyTokens.get(i))) {
+                    count++;
+                    // DEBUG
+                    //System.out.println("REMOVING: " + tkMessage.bodyTokens.get(i));
+                    tkMessage.bodyTokens.remove(i);
+                }
+            }
+            // DEBUG
+            //System.out.println("Remove " + count + " stopwords from body.");
+        }
 
 
         //---------------------------------+
