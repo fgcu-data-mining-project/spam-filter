@@ -1,7 +1,7 @@
 Email Classifier
 ===============
 
-The Email Classifier (TODO better name?) provides binary classification of a given set of email messages. The messages are labeled spam or not spam using two core classification alogrithms and X experimental algorithms,
+The Email Classifier (TODO better name?) provides (multinomial?) classification of a given set of email messages. The messages are labeled spam or not spam using two core classification alogrithms and X experimental algorithms,
 
 Usage
 -----

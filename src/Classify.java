@@ -1,9 +1,11 @@
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -30,12 +32,26 @@ public class Classify implements Runnable {
     @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
     private int kforKNN = 2;
 
+    /**
+     * The set of parsed messages.
+     */
+    private ArrayList<Message> messages = new ArrayList<>();
+
+    /**
+     * The set of tokenized messages.
+     */
+    private ArrayList<TokenizedMessage> tokenizedMessages = new ArrayList<>();
+
     public static void main(String[] args) {
         CommandLine.run(new Classify(), args);
     }
 
     @Override
     public void run() {
+
+        //------------------------------------+
+        //    DO VERBOSE THINGS IF NEEDED    /
+        //----------------------------------+
 
         // If verbose, print input path.
         if (verbose.length > 0) {
@@ -46,16 +62,16 @@ public class Classify implements Runnable {
             }
         }
 
-        // If very verbose, print paths to all files in input path directory.
+        // If very verbose, print paths to all files in input path directory, also.
         if (verbose.length > 1) {
 
             int fileCount = new File(inputPath.toString()).list().length;
             System.out.println("Number of messages to classify: " + fileCount);
 
-            System.out.println("Messages:\n");
+            System.out.println("Messages: ");
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputPath)) {
                 for (Path file: stream) {
-                    System.out.println(file.getFileName());
+                    System.out.println("    " + file.getFileName());
                 }
             } catch (IOException | DirectoryIteratorException ex) {
                 // IOException can never be thrown by the iteration.
@@ -64,30 +80,61 @@ public class Classify implements Runnable {
             }
         }
 
+        //---------------------+
+        //    GET THE DATA    /
+        //-------------------+
 
-        // TODO Read data based on args.
+        // Get handle to directory, create message objects from files
+        // and add to messages list.
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputPath)) {
+            // Add messages to messages ArrayList.
+            for (Path file: stream) {
+                messages.add(new Message(file, StandardCharsets.UTF_8));
+            }
 
-            // TODO Have handle for files, now do something with them...
-
+            // DEBUG
+            //for (Message message : messages) {
+            //    System.out.println(message);
+            //}
         } catch (IOException | DirectoryIteratorException ex) {
             // IOException can never be thrown by the iteration.
             // In this snippet, it can only be thrown by newDirectoryStream.
             System.err.println(ex);
         }
 
-        // TODO Clean/prepare data.
+        //-------------------------+
+        //    WRANGLE THE DATA    /
+        //-----------------------+
 
-            // TODO Tokenize.
+        // TODO Tokenize.
+        // Populate tokenizedMessages ArrayList with tokenized messages.
+        for (Message message : messages) {
+            tokenizedMessages.add(Tokenizer.tokenize(message));
+        }
 
-            // TODO Normalize.
+        // DEBUG
+        //for (TokenizedMessage tkMessage : tokenizedMessages) {
+        //    System.out.println(tkMessage);
+        //}
 
-            // TODO Remove stopwords.
+        // TODO Normalize.
 
-        // TODO Load algo classifier based on args.
+        // TODO Remove stopwords.
 
-        // TODO Classify.
 
-        // TODO Return data / Produce report.
+        //---------------------------------+
+        //    TODO LOAD THE CLASSIFIER    /
+        //-------------------------------+
+
+
+        //-------------------------------------+
+        //    TODO CLASSIFY ALL THE THINGS    /
+        //-----------------------------------+
+
+
+        //---------------------------------------------------+
+        //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
+        //-------------------------------------------------+
+
     }
 }
