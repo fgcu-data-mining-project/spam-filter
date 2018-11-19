@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 /**
  * Tokenization provider.
  */
@@ -18,7 +19,8 @@ public class Tokenizer {
         TokenizedMessage tkMessage = new TokenizedMessage(message);
 
         // Tokenize subject.
-        tkMessage.subjectTokens = Arrays.asList(message.subject.split("\\s+"));
+        tkMessage.setSubjectTokens(
+                Arrays.asList(message.subject.split("\\s+")));
 
         // Tokenize body.
         List<String> bodyTokens = new ArrayList<String>();
@@ -28,7 +30,7 @@ public class Tokenizer {
 
             bodyTokens.addAll(lineTokens);
         }
-        tkMessage.bodyTokens = bodyTokens;
+        tkMessage.setBodyTokens(bodyTokens);
 
         return tkMessage;
     }

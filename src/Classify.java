@@ -1,10 +1,7 @@
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 
 import picocli.CommandLine;
@@ -24,20 +21,29 @@ public class Classify implements Runnable {
     private boolean[] verbose = new boolean[0];
 
     @Parameters(arity = "1", paramLabel = "PATH",
-            description = "A single path to a directory of emails to classify.")
+            description = "A single path to a directory containing training and testing sets.")
     private Path inputPath;
 
     @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO EXPERIMENTAL...")
     private String algorithm = "KNN";
 
-    // TODO Add option for setting k with the default of 2.
+    // TODO Add option for setting k with the default of 3.
     @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
-    private int kforKNN = 2;
+    private int kforKNN = 3;
+
+    // TODO Add option for training data location with default of data/train.
+
+    // TODO Add option for test data location with default of data/test.
 
     /**
-     * The set of parsed messages.
+     * The set of parsed messages in training set.
      */
-    private ArrayList<Message> messages = new ArrayList<>();
+    private ArrayList<Message> trainMessages = new ArrayList<>();
+
+    /**
+     * The set of parsed messages in training set.
+     */
+    private ArrayList<Message> testMessages = new ArrayList<>();
 
     /**
      * The set of tokenized messages.
@@ -59,19 +65,39 @@ public class Classify implements Runnable {
         if (verbose.length > 0) {
             System.out.println("Input path: " + inputPath.toString());
             System.out.println("Algorithm: " + algorithm);
-            if (algorithm.equals("KNN")) {
+            if (algorithm.equals("knn")) {
                 System.out.println("K: " + kforKNN);
             }
         }
 
+        // TODO Better place for this?
+        Path trainPath = Paths.get(inputPath.toString(), "train");
+        Path testPath = Paths.get(inputPath.toString(), "test");
+
         // If very verbose, print paths to all files in input path directory, also.
         if (verbose.length > 1) {
 
-            int fileCount = new File(inputPath.toString()).list().length;
-            System.out.println("Number of messages to classify: " + fileCount);
+            int trainfileCount = new File(trainPath.toString()).list().length;
+            System.out.println("Number of training messages: " + trainfileCount);
 
-            System.out.println("Messages: ");
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputPath)) {
+            System.out.println("Training messages: ");
+            try (DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(trainPath)) {
+                for (Path file: stream) {
+                    System.out.println("    " + file.getFileName());
+                }
+            } catch (IOException | DirectoryIteratorException ex) {
+                // IOException can never be thrown by the iteration.
+                // In this snippet, it can only be thrown by newDirectoryStream.
+                System.err.println(ex);
+            }
+
+            int testfileCount = new File(testPath.toString()).list().length;
+            System.out.println("Number of test messages: " + trainfileCount);
+
+            System.out.println("Test messages: ");
+            try (DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(testPath)) {
                 for (Path file: stream) {
                     System.out.println("    " + file.getFileName());
                 }
@@ -86,12 +112,34 @@ public class Classify implements Runnable {
         //    GET THE DATA    /
         //-------------------+
 
+        // Training data.
+
         // Get handle to directory, create message objects from files
-        // and add to messages list.
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputPath)) {
+        // and add to training messages list.
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(trainPath)) {
             // Add messages to messages ArrayList.
             for (Path file: stream) {
-                messages.add(new Message(file, StandardCharsets.UTF_8));
+                trainMessages.add(new Message(file, StandardCharsets.UTF_8));
+            }
+
+            // DEBUG
+            //for (Message message : messages) {
+            //    System.out.println(message);
+            //}
+        } catch (IOException | DirectoryIteratorException ex) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(ex);
+        }
+
+        // Test data.
+
+        // Get handle to directory, create message objects from files
+        // and add to testing messages list.
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(testPath)) {
+            // Add messages to messages ArrayList.
+            for (Path file: stream) {
+                testMessages.add(new Message(file, StandardCharsets.UTF_8));
             }
 
             // DEBUG
@@ -108,36 +156,107 @@ public class Classify implements Runnable {
         //    WRANGLE THE DATA    /
         //-----------------------+
 
-        // Tokenize.
-        // Populate tokenizedMessages ArrayList with tokenized messages.
+        // Train
+
+        List<TokenizedMessage> wrangledTrainMessages = runTheWranglePipeline(trainMessages);
+
+        // Test
+
+        List<TokenizedMessage> wrangledTestMessages = runTheWranglePipeline(testMessages);
+
+        //----------------------------+
+        //    LOAD THE CLASSIFIER    /
+        //--------------------------+
+
+        // KNN (for now, will encapsulate eventually...)
+        // TODO Refactor all of this away to appropriate places.
+        if (algorithm.toLowerCase().equals("knn")) {
+
+            // Create instance of classifier and pass in training data set.
+            ClassifierKNN knn = new ClassifierKNN(wrangledTrainMessages, kforKNN);
+
+            //--------------------------------+
+            //    CLASSIFY ALL THE THINGS    /
+            //------------------------------+
+
+            // Now run knn for test set.
+
+            int totalNum = 0;
+            int totalCorrect = 0;
+            for (TokenizedMessage testMessage : wrangledTestMessages) {
+                // Predict label of test message.
+                boolean label = knn.predict(testMessage);
+                // DEBUG
+                //System.out.println("Predicted label: " + label);
+                //System.out.println("Actual label: " + testMessage.isSpam());
+
+                totalNum++;
+                if (label == testMessage.isSpam()) { totalCorrect++; }
+            }
+
+            // DEBUG
+            System.out.println("totalCorrect: " + totalCorrect);
+            System.out.println("totalNum: " + totalNum);
+            System.out.println("Accuracy: " + (totalCorrect/ (double) totalNum));
+
+            //---------------------------------------------------+
+            //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
+            //-------------------------------------------------+
+
+        }
+
+        // TODO Refactor all of this away to appropriate places.
+        if (algorithm.toLowerCase().equals("nb")) {
+
+            // TODO NB goes here for now.
+            System.out.println("TODO NB");
+
+        }
+    }
+
+    // TODO Not a serious method name! Will be refactored away.
+    private ArrayList<TokenizedMessage> runTheWranglePipeline(ArrayList<Message> messages) {
+
+        // Create empty list to store wrangled messages.
+        ArrayList<TokenizedMessage> wrangledMessages = new ArrayList<>();
+
+        //==================+
+        //     Tokenize     |
+        //==================+
+
+        // Populate ArrayList with tokenized messages.
         for (Message message : messages) {
-            tokenizedMessages.add(Tokenizer.tokenize(message));
+            wrangledMessages.add(Tokenizer.tokenize(message));
         }
 
         // DEBUG
-        //for (TokenizedMessage tkMessage : tokenizedMessages) {
-        //    System.out.println(tkMessage);
+        //for (TokenizedMessage wrMessage : wrangledMessages) {
+        //    System.out.println(wrMessage);
         //}
 
-        // Normalize:
+        //===================+
+        //     Normalize     |
+        //===================+
+
         // - Covert to lowercase.
-        // - Remove stop words.
-        for (TokenizedMessage tkMessage : tokenizedMessages) {
-            tkMessage.subjectTokens = tkMessage.subjectTokens.stream()
+        for (TokenizedMessage tkMessage : wrangledMessages) {
+            tkMessage.setSubjectTokens(tkMessage.getSubjectTokens().stream()
                     .map(String::toLowerCase)
-                    .collect(toList());
+                    .collect(toList()));
 
-            tkMessage.bodyTokens = tkMessage.bodyTokens.stream()
+            tkMessage.setBodyTokens(tkMessage.getBodyTokens().stream()
                     .map(String::toLowerCase)
-                    .collect(toList());
+                    .collect(toList()));
         }
 
         // DEBUG
-        //for (TokenizedMessage tkMessage : tokenizedMessages) {
-        //    System.out.println(tkMessage);
+        //for (TokenizedMessage wrMessage : wrangledMessages) {
+        //    System.out.println(wrMessage);
         //}
 
-        // TODO Remove stopwords.
+        //===========================+
+        //     Remove Stop Words     |
+        //===========================+
 
         // TODO Refer to list of top stop words?
         String[] defaultStopWords = {"i", "a", "about", "an",
@@ -147,49 +266,43 @@ public class Classify implements Runnable {
         Set stopWords = new HashSet<>(Arrays.asList(defaultStopWords));
 
         // TODO More efficient way to do this?
-        for (TokenizedMessage tkMessage : tokenizedMessages) {
+        for (TokenizedMessage tkMessage : wrangledMessages) {
+
+            // Get Lists of tokens.
+            List<String> subjectTokens = tkMessage.getSubjectTokens();
+            List<String> bodyTokens = tkMessage.getBodyTokens();
 
             int count = 0;
-            for (int i = 0; i < tkMessage.subjectTokens.size(); i++) {
+            for (int i = 0; i < subjectTokens.size(); i++) {
 
-                if (stopWords.contains(tkMessage.subjectTokens.get(i))) {
+                if (stopWords.contains(tkMessage.getSubjectTokens().get(i))) {
                     count++;
                     // DEBUG
-                    //System.out.println("REMOVING: " + tkMessage.subjectTokens.get(i));
-                    tkMessage.subjectTokens.remove(i);
+                    //System.out.println("REMOVING: " + subjectTokens.get(i));
+                    subjectTokens.remove(i);
                 }
             }
+            // Replace with pared down list.
+            tkMessage.setSubjectTokens(subjectTokens);
             // DEBUG
-            //System.out.println("Remove " + count + " stopwords from subject.");
+            //System.out.println("Removed " + count + " stop words from subject.");
 
             count = 0;
-            for (int i = 0; i < tkMessage.bodyTokens.size(); i++) {
+            for (int i = 0; i < bodyTokens.size(); i++) {
 
-                if (stopWords.contains(tkMessage.bodyTokens.get(i))) {
+                if (stopWords.contains(bodyTokens.get(i))) {
                     count++;
                     // DEBUG
-                    //System.out.println("REMOVING: " + tkMessage.bodyTokens.get(i));
-                    tkMessage.bodyTokens.remove(i);
+                    //System.out.println("REMOVING: " + bodyTokens.get(i));
+                    bodyTokens.remove(i);
                 }
             }
+            // Replace with pared down list.
+            tkMessage.setBodyTokens(bodyTokens);
             // DEBUG
-            //System.out.println("Remove " + count + " stopwords from body.");
+            //System.out.println("Removed " + count + " stop words from body.");
         }
 
-
-        //---------------------------------+
-        //    TODO LOAD THE CLASSIFIER    /
-        //-------------------------------+
-
-
-        //-------------------------------------+
-        //    TODO CLASSIFY ALL THE THINGS    /
-        //-----------------------------------+
-
-
-        //---------------------------------------------------+
-        //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
-        //-------------------------------------------------+
-
+        return wrangledMessages;
     }
 }

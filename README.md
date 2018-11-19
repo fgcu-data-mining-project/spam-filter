@@ -23,7 +23,7 @@ Usage: Classify [-hV] [-v]... [-a=<algorithm>] [-k=<kforKNN>] PATH
 
 Two core classification algorithms are provided: K-Nearest Neighbors (KNN) and Naive Bayes (NB). 
 
-To classify messages using KNN with default K of 2:
+To classify messages using KNN with default K of 3:
 
 ```
 java Classify -a knn ./data
