@@ -329,6 +329,16 @@ public class Classify implements Runnable {
             //System.out.println("Removed " + count + " stop words from body.");
         }
 
+
+        //=======================+
+        //     TODO Stemming     |
+        //=======================+
+
+
+        //=============================+
+        //     TODO TERM WEIGHTING     |
+        //=============================+
+
         return wrangledMessages;
     }
 

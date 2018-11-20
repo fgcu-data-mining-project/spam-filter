@@ -126,12 +126,11 @@ public class ClassifierKNN {
      */
     private double similarity(TokenizedMessage tkMessage1, TokenizedMessage tkMessage2) {
 
-        // TODO Move this to an appropriate place.
-        // Remove duplicates by creating sets.
-        List<String> allTokensSet1 = new ArrayList<>(new HashSet<>(tkMessage1.getAllTokens()));
-        List<String> allTokensSet2 = new ArrayList<>(new HashSet<>(tkMessage2.getAllTokens()));
+        // Get tokens.
+        List<String> allTokensSet1 = tkMessage1.getAllTokens();
+        List<String> allTokensSet2 = tkMessage2.getAllTokens();
 
-        // Get length of deduped vectors.
+        // Get length of vectors.
         double lengthMssge1 = Math.sqrt(allTokensSet1.size());
         double lengthMssge2 = Math.sqrt(allTokensSet2.size());
 
