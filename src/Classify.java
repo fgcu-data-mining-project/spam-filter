@@ -92,6 +92,7 @@ public class Classify implements Runnable {
             // Add messages to messages ArrayList.
             for (Path file: stream) {
                 messages.add(new Message(file, StandardCharsets.UTF_8));
+
             }
 
             // DEBUG
@@ -173,14 +174,18 @@ public class Classify implements Runnable {
                 }
             }
             // DEBUG
-            //System.out.println("Remove " + count + " stopwords from body.");
+            System.out.println("Remove " + count + " stopwords from body.");
         }
 
 
         //---------------------------------+
         //    TODO LOAD THE CLASSIFIER    /
         //-------------------------------+
-
+        if (algorithm.equals("NB")) {
+            NaiveBayes nb = new NaiveBayes();
+            nb.train(tokenizedMessages);
+        }
+//        int spamCount = tokenizedMessages.stream().filter(t ->  t.FILE_NAME.startsWith("s")).mapToInt(t -> 1).sum();
 
         //-------------------------------------+
         //    TODO CLASSIFY ALL THE THINGS    /
