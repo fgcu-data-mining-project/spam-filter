@@ -5,63 +5,109 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class NaiveBayes {
-  /**
-   * probability that the message is spam
-   */
-  private final String DATA_DIRECTORY_PATH = "";
 
   Set<String> distinctTokens; // set of all distinct tokens
 
-  private class MsgClassification {
-    private String classType; // "spam" or "ham"
-    private int msgCount; // total number of messages
+  // Maps token to number of messages it has appeared in
+  private Map<String, Integer> hamCounts;
+  private Map<String, Integer> spamCounts;
 
-    // Dictionaries mapping token to number of messages it has appeared in
-    Map<String, Integer> tokenCounts = new TreeMap<>();
+  // number of messages of each type
+  private Integer spamMsgCount;
+  private Integer hamMsgCount;
 
-    // Dictionaries mapping token to probability it will appear in that type of message
-    Map<String, Double> probabilities = new TreeMap<>();
+  // Maps token to probability it will appear in that type of message
+  private Map<String, Double> probabilities;
 
-    // Adds the token to the Dictionary if absent and sets it's count to 1
-    //  or increments the token's counter by 1.
-    public void incTokenCount(String token){
-      tokenCounts.put(token, tokenCounts.getOrDefault(token,0)+1);
-    }
-
-    public void setProbability(String token, Double prob){
-      probabilities.put(token, prob);
-    }
-
-    public Double getProbability(String token){
-      return probabilities.get(token);
-    }
-
+  // default constructor. initializes to an untrained model
+  NaiveBayes() {
+    reset();
   }
 
-  // Initialize the probability dictionary?
-  // TODO: refactor to use a better external datastore rather than flatfiles
-  void initNB(String instance){
-    // filename
-    String datafile = (instance != null) ? instance + ".data" : "default.data";
+  // Reload a trained model
+  public NaiveBayes (String filename){
+    // TODO: load saved data into the appropriate fields
+    // TODO: refactor to use a better external datastore rather than flatfiles
+    String prefix = (filename != null) ? filename.toLowerCase().strip() : "default";
 
-    // try to load the database
-    try (Stream<String> lines = Files.lines(Paths.get(instance))) {
+    // initialize empty maps
+    reset();
 
-    } catch (IOException e) {
-      e.printStackTrace();
+    // all this just to use one construct to load three files
+    String[] fileTypes = {"ham","spam","probs"};
+    Map[] trees = {hamCounts, spamCounts, probabilities};
+
+    // try to load the saved maps
+    // Java is still an ugly horrible language...
+    for (int i=0;i<fileTypes.length;i++) {
+      try (Stream<String> fileStream = Files.lines(Paths.get("$filename." + fileTypes[i]))) {
+        Map tree = trees[i];
+        fileStream.forEachOrdered(line -> {
+          String s[] = line.split(",");
+          tree.put(s[0], Integer.valueOf(s[1]));
+        });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
-
-
   }
+
+  private void reset(){
+    hamCounts = new TreeMap<>();
+    spamCounts = new TreeMap<>();
+    probabilities = new TreeMap<>();
+    spamMsgCount = 0;
+    hamMsgCount = 0;
+  }
+
+  // Adds the token to the countsMap if absent and sets it's count to 1
+  //  or increments the token's counter by 1.
+  private void incTokenCount(String token, String label) {
+    if (label.equals("ham")) {
+      hamCounts.put(token, hamCounts.getOrDefault(token, 0) + 1);
+    } else {
+      spamCounts.put(token, spamCounts.getOrDefault(token, 0) + 1);
+    }
+  }
+
+  private void incHamMsgCount(){ hamMsgCount++; }
+  private void incSpamMsgCount(){ spamMsgCount++; }
+
+  public void setProbability(String token, Double prob) {
+    probabilities.put(token, prob);
+    //probabilities[token] = prob;
+  }
+
+  public Double getProbability(String token) {
+    return probabilities.get(token);
+  }
+
 
   // Take the messages from Classify. Stream through the messages twice,
   //  once to process spam, second time for ham.
-  void train(ArrayList<TokenizedMessage> messages){
-    messages.stream().filter(t ->  t.FILE_NAME.startsWith("s"))
-        .mapToInt(t -> 1).sum();
+  void train(List<TokenizedMessage> messages) {
+//    1) loop through all the messages
+//      1.1) loop through the tokens in each message
+//      1.2) increment the token count in the respective mapCount
+//      1.3) update the frequency value in the frequencyMap
+//    2) save the state of this nb
+    String label;
+    for (TokenizedMessage msg: messages) {
+      label = (msg.isSpam())? "spam" : "ham";
+      for (String tk: msg.getSubjectTokens()){
+        learn(tk, label);
+      }
+      for (String tk: msg.getBodyTokens()){
 
-    messages.stream().filter(t ->  !t.FILE_NAME.startsWith("s"))
-        .mapToInt(t -> 1).sum();
+      }
+    }
+
+
+//    messages.stream().filter(Message::isSpam)
+//        .mapToInt(t -> 1).sum();
+//
+//    messages.stream().filter(t -> !t.isSpam())
+//        .mapToInt(t -> 1).sum();
   }
 
   // need 3 token counts in messages (I think): spam, ham, totals
