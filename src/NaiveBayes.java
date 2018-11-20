@@ -105,11 +105,15 @@ public class NaiveBayes {
     }
   }
 
-  int getHamMsgCount() { return hamCounts.get("##hamMsgCount##"); }
-  void incHamMsgCount() { hamCounts.put("##hamMsgCount##", getHamMsgCount() + 1); }
+  int getHamMsgCount() { return hamCounts.get("##msgCount##"); }
+  void incHamMsgCount() { hamCounts.put("##msgCount##", getHamMsgCount() + 1); }
 
-  int getSpamMsgCount() { return spamCounts.get("##spamMsgCount##"); }
-  void incSpamMsgCount() { spamCounts.put("##spamMsgCount##", getSpamMsgCount() + 1); }
+  int getSpamMsgCount() { return spamCounts.get("##msgCount##"); }
+  void incSpamMsgCount() { spamCounts.put("##msgCount##", getSpamMsgCount() + 1); }
+
+  int getHamTkCount(String tk){ return hamCounts.getOrDefault(tk, 0); }
+  int getSpamTkCount(String tk){ return spamCounts.getOrDefault(tk, 0); }
+
 
   public void setProbability(String token, Double prob) {
     probabilities.put(token, prob);
@@ -123,14 +127,22 @@ public class NaiveBayes {
   // Take the messages from Classify. Stream through the messages twice,
   //  once to process spam, second time for ham.
   void train(List<TokenizedMessage> messages) {
-//    1) loop through all the messages
-//      1.1) loop through the tokens in each message
+//    1)
+//      1.1)
 //      1.2) increment the token count in the respective mapCount
 //      1.3) update the frequency value in the frequencyMap
 //    2) save the state of this nb
     String label;
     for (TokenizedMessage msg: messages) {
       label = (msg.isSpam())? "spam" : "ham";
+
+      // increment this label's message counter
+      if (label.equals("ham")){
+        incHamMsgCount();
+      } else {
+        incSpamMsgCount();
+      }
+
       for (String tk: msg.getSubjectTokens()){
         learn("##subject##$tk", label);
       }
@@ -138,18 +150,16 @@ public class NaiveBayes {
         learn("##body##$tk", label);
       }
     }
-
-
-//    messages.stream().filter(Message::isSpam)
-//        .mapToInt(t -> 1).sum();
-//
-//    messages.stream().filter(t -> !t.isSpam())
-//        .mapToInt(t -> 1).sum();
+    System.out.println("breakpoint");
   }
 
   void learn(String tk, String label){
-    // add token to the proper countsMap
+    // add/increment token to the proper countsMap
+    incTokenCount(tk, label);
+    Double tkProb = (getSpamTkCount(tk)/getSpamMsgCount())/
+        (1.0 * getSpamTkCount(tk)/getSpamMsgCount() + getHamTkCount(tk)/getHamMsgCount());
     // then update the probability
+    setProbability(tk,tkProb);
   }
 
   // need 3 token counts in messages (I think): spam, ham, totals
