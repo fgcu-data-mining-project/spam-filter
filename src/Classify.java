@@ -20,27 +20,34 @@ public class Classify implements Runnable {
             description = "Verbose mode. Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
+    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO...")
+    private String algorithm = "knn";
+
+    @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
+    private int kforKNN = 3;
+
+    @Option(names = {"--trainPath"}, description = "Path within data folder to training data.")
+    private String trainDataPath = "train";
+
+    @Option(names = {"--testPath"}, description = "Path within data folder to test data.")
+    private String testDataPath = "test";
+
     @Parameters(arity = "1", paramLabel = "PATH",
             description = "A single path to a directory containing training and testing sets.")
     private Path inputPath;
 
-    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO EXPERIMENTAL...")
-    private String algorithm = "KNN";
-
-    // TODO Add option for setting k with the default of 3.
-    @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
-    private int kforKNN = 3;
-
-    // TODO Add option for training data path with default of data/train.
-
-    // TODO Add option for test data path with default of data/test.
-
-    private Path trainDataPath = Paths.get("train");
-
+    /**
+     * The full path to the training data,
+     * which is assembled from arguments,
+     * or defaults to ./data/train.
+     */
     private Path trainFullPath;
 
-    private Path testDataPath = Paths.get("test");
-
+    /**
+     * The full path to the training data,
+     * which is assembled from arguments,
+     * or defaults to ./data/test.
+     */
     private Path testFullPath;
 
     /**
@@ -70,8 +77,8 @@ public class Classify implements Runnable {
         //-----------------------+
 
         // TODO Clean this up and add optional params to pass in paths.
-        trainFullPath = Paths.get(inputPath.toString(), trainDataPath.toString());
-        testFullPath = Paths.get(inputPath.toString(), testDataPath.toString());
+        trainFullPath = Paths.get(inputPath.toString(), trainDataPath);
+        testFullPath = Paths.get(inputPath.toString(), testDataPath);
 
 
         //------------------------------------+
