@@ -1,4 +1,5 @@
 
+// TODO Remove TextNormalizer?
 
 public class TextNormalizer {
 

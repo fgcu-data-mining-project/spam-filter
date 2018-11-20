@@ -16,27 +16,37 @@ public class Message {
     /**
      * Name of file.
      */
-    public String FILE_NAME;
+    protected String FILE_NAME;
 
     /**
      * Absolute path to file.
      */
-    public String FILE_PATH;
+    protected String FILE_PATH;
 
     /**
      * Encoding of file.
      */
-    public Charset ENCODING;
+    protected Charset ENCODING;
 
     /**
      * The subject line of the message.
      */
-    public String subject;
+    protected String subject;
 
     /**
      * The body of the message.
      */
-    public List<String> body;
+    protected List<String> body;
+
+    /**
+     * True if labeled as spam.
+     */
+    protected boolean spam = false;
+
+
+    //-----------------------+
+    //     CONSTRUCTORS     /
+    //---------------------+
 
     /**
      * Constructor for empty object.
@@ -51,6 +61,14 @@ public class Message {
 
         // Set metadata.
         FILE_NAME = message.getFileName().toString();
+
+        // Extract label from filename.
+        // If the first letter is 's', it's spam.
+        // TODO This is tightly coupled to this particular set of data.
+        if (FILE_NAME.charAt(0) == 's') {
+            spam = true;
+        }
+
         FILE_PATH = message.toAbsolutePath().toString();
         ENCODING = encoding;
 
@@ -75,6 +93,11 @@ public class Message {
         }
     }
 
+
+    //-------------------------+
+    //     PUBLIC METHODS     /
+    //-----------------------+
+
     @Override
     public String toString() {
         return "Message{" +
@@ -82,7 +105,55 @@ public class Message {
                 ", FILE_PATH='" + FILE_PATH + '\'' +
                 ", ENCODING=" + ENCODING +
                 ", subject='" + subject + '\'' +
-                ", body=" + body +
+                ", body=" + body + '\'' +
+                ", spam=" +
                 '}';
     }
+
+
+    //--------------------------+
+    //     PRIVATE METHODS     /
+    //------------------------+
+
+
+    //----------------------------+
+    //     GETTERS & SETTERS     /
+    //--------------------------+
+
+    public String getFILE_NAME() {
+        return FILE_NAME;
+    }
+
+    public String getFILE_PATH() {
+        return FILE_PATH;
+    }
+
+    public Charset getENCODING() {
+        return ENCODING;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public List<String> getBody() {
+        return body;
+    }
+
+    public boolean isSpam() {
+        return spam;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public void setBody(List<String> body) {
+        this.body = body;
+    }
+
+    public void setSpam(boolean isSpam) {
+        this.spam = isSpam;
+    }
+
 }

@@ -10,12 +10,16 @@ public class TokenizedMessage extends Message {
     /**
      * List of tokens from tokenization of the message subject.
      */
-    public List<String> subjectTokens;
+    private List<String> subjectTokens;
 
     /**
      * List of tokens from tokenization of the message body.
      */
-    public List<String> bodyTokens;
+    private List<String> bodyTokens;
+
+    //-----------------------+
+    //     CONSTRUCTORS     /
+    //---------------------+
 
     /**
      * Constructor
@@ -27,7 +31,13 @@ public class TokenizedMessage extends Message {
         this.ENCODING = message.ENCODING;
         this.subject = message.subject;
         this.body = message.body;
+        this.spam = message.spam;
     }
+
+
+    //-------------------------+
+    //     PUBLIC METHODS     /
+    //-----------------------+
 
     @Override
     public String toString() {
@@ -38,7 +48,35 @@ public class TokenizedMessage extends Message {
                 ", FILE_PATH='" + FILE_PATH + '\'' +
                 ", ENCODING=" + ENCODING +
                 ", subject='" + subject + '\'' +
-                ", body=" + body +
+                ", body=" + body + '\'' +
+                ", spam=" +
                 '}';
     }
+
+
+    //--------------------------+
+    //     PRIVATE METHODS     /
+    //------------------------+
+
+
+    //----------------------------+
+    //     GETTERS & SETTERS     /
+    //--------------------------+
+
+    public List<String> getSubjectTokens() {
+        return subjectTokens;
+    }
+
+    public void setSubjectTokens(List<String> subjectTokens) {
+        this.subjectTokens = subjectTokens;
+    }
+
+    public List<String> getBodyTokens() {
+        return bodyTokens;
+    }
+
+    public void setBodyTokens(List<String> bodyTokens) {
+        this.bodyTokens = bodyTokens;
+    }
+
 }
