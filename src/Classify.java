@@ -151,10 +151,6 @@ public class Classify implements Runnable {
             nb.train(wrangledTrainMessages);
 
 //        int spamCount = tokenizedMessages.stream().filter(t ->  t.FILE_NAME.startsWith("s")).mapToInt(t -> 1).sum();
-
-            // TODO NB goes here for now.
-            System.out.println("TODO NB");
-
         }
     }
 

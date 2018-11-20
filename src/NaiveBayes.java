@@ -11,9 +11,27 @@ public class NaiveBayes {
   private Map<String, Integer> spamCounts;
 
   // Maps token to probability it will appear in that type of message
-  private Map<String, Double> probabilities;
+  // replacing the Map with an ArrayList using Entry Objects for sorting...
+  // this is problematic because there is no easy way to update these... I hate Java
+//  private Map<String, Double> probabilities;
+  private ArrayList<Entry<String>> probabilities;
 
   private final String MODEL_SAVE_DIR = "./NB_models";
+
+  private class Entry <T> implements Comparable<Entry<T>>{
+    public T token;
+    public Double probability;
+    public Entry(T token, Double p){
+      this.token=token;
+      probability=p;
+    }
+    public int compareTo(Entry<T> e){
+      // if this is larger returns > 0
+      // if equal returns 0
+      // if this is less than e returns < 0
+      return (int) (e.probability - this.probability);
+    }
+  }
 
   // default constructor. initializes to an untrained model
   NaiveBayes() {
@@ -32,9 +50,11 @@ public class NaiveBayes {
   }
 
   private void reset(){
-    hamCounts = new TreeMap<>();
-    spamCounts = new TreeMap<>();
-    probabilities = new TreeMap<>();
+    hamCounts = new HashMap<>();
+    hamCounts.put("##msgCount##", 0);
+    spamCounts = new HashMap<>();
+    spamCounts.put("##msgCount##", 0);
+    probabilities = new ArrayList<>();
   }
 
   void loadModel (String modelName) {
@@ -62,7 +82,7 @@ public class NaiveBayes {
       fileStream = Files.lines(Paths.get("$filename.probs"));
       fileStream.forEachOrdered(line -> {
         String s[] = line.split(",");
-        probabilities.put(s[0], Double.valueOf(s[1]));
+        probabilities.add(new Entry<>(s[0], Double.valueOf(s[1])));
       });
 
       fileStream.close();
@@ -116,7 +136,7 @@ public class NaiveBayes {
 
 
   public void setProbability(String token, Double prob) {
-    probabilities.put(token, prob);
+    probabilities.add(token, prob);
   }
 
   public Double getProbability(String token) {
@@ -135,6 +155,8 @@ public class NaiveBayes {
     String label;
     for (TokenizedMessage msg: messages) {
       label = (msg.isSpam())? "spam" : "ham";
+      HashSet<String> tknSet = new HashSet<>();
+      tknSet.addAll(msg.getSubjectTokens());
 
       // increment this label's message counter
       if (label.equals("ham")){
@@ -143,21 +165,30 @@ public class NaiveBayes {
         incSpamMsgCount();
       }
 
-      for (String tk: msg.getSubjectTokens()){
-        learn("##subject##$tk", label);
+      for (String tk: tknSet){
+        learn("##subject##"+tk, label);
       }
-      for (String tk: msg.getBodyTokens()){
-        learn("##body##$tk", label);
+      for (String tk: tknSet){
+        learn("##body##"+tk, label);
       }
     }
+
+
     System.out.println("breakpoint");
   }
 
   void learn(String tk, String label){
     // add/increment token to the proper countsMap
     incTokenCount(tk, label);
-    Double tkProb = (getSpamTkCount(tk)/getSpamMsgCount())/
-        (1.0 * getSpamTkCount(tk)/getSpamMsgCount() + getHamTkCount(tk)/getHamMsgCount());
+
+    // horrible way of handling the divide by zero cases...
+    Double pSpam = (getSpamMsgCount() == 0)? 0.0 : 1.0 * getSpamTkCount(tk)/getSpamMsgCount();
+    Double pHam = (getHamMsgCount() == 0)? 0.0 : 1.0 * getHamTkCount(tk)/getHamMsgCount();
+
+    Double tkProb = pSpam / (pSpam + pHam);
+//
+//    Double tkProb = (getSpamTkCount(tk)/getSpamMsgCount())/
+//        (1.0 * getSpamTkCount(tk)/getSpamMsgCount() + getHamTkCount(tk)/getHamMsgCount());
     // then update the probability
     setProbability(tk,tkProb);
   }
