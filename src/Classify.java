@@ -31,9 +31,17 @@ public class Classify implements Runnable {
     @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
     private int kforKNN = 3;
 
-    // TODO Add option for training data location with default of data/train.
+    // TODO Add option for training data path with default of data/train.
 
-    // TODO Add option for test data location with default of data/test.
+    // TODO Add option for test data path with default of data/test.
+
+    private Path trainDataPath = Paths.get("train");
+
+    private Path trainFullPath;
+
+    private Path testDataPath = Paths.get("test");
+
+    private Path testFullPath;
 
     /**
      * The set of parsed messages in training set.
@@ -57,56 +65,19 @@ public class Classify implements Runnable {
     @Override
     public void run() {
 
+        //-------------------------+
+        //    SET UP THE SETUP    /
+        //-----------------------+
+
+        // TODO Clean this up and add optional params to pass in paths.
+        trainFullPath = Paths.get(inputPath.toString(), trainDataPath.toString());
+        testFullPath = Paths.get(inputPath.toString(), testDataPath.toString());
+
         //------------------------------------+
         //    DO VERBOSE THINGS IF NEEDED    /
         //----------------------------------+
 
-        // If verbose, print input path.
-        if (verbose.length > 0) {
-            System.out.println("Input path: " + inputPath.toString());
-            System.out.println("Algorithm: " + algorithm);
-            if (algorithm.equals("knn")) {
-                System.out.println("K: " + kforKNN);
-            }
-        }
-
-        // TODO Better place for this?
-        Path trainPath = Paths.get(inputPath.toString(), "train");
-        Path testPath = Paths.get(inputPath.toString(), "test");
-
-        // If very verbose, print paths to all files in input path directory, also.
-        if (verbose.length > 1) {
-
-            int trainfileCount = new File(trainPath.toString()).list().length;
-            System.out.println("Number of training messages: " + trainfileCount);
-
-            System.out.println("Training messages: ");
-            try (DirectoryStream<Path> stream =
-                         Files.newDirectoryStream(trainPath)) {
-                for (Path file: stream) {
-                    System.out.println("    " + file.getFileName());
-                }
-            } catch (IOException | DirectoryIteratorException ex) {
-                // IOException can never be thrown by the iteration.
-                // In this snippet, it can only be thrown by newDirectoryStream.
-                System.err.println(ex);
-            }
-
-            int testfileCount = new File(testPath.toString()).list().length;
-            System.out.println("Number of test messages: " + trainfileCount);
-
-            System.out.println("Test messages: ");
-            try (DirectoryStream<Path> stream =
-                         Files.newDirectoryStream(testPath)) {
-                for (Path file: stream) {
-                    System.out.println("    " + file.getFileName());
-                }
-            } catch (IOException | DirectoryIteratorException ex) {
-                // IOException can never be thrown by the iteration.
-                // In this snippet, it can only be thrown by newDirectoryStream.
-                System.err.println(ex);
-            }
-        }
+        printVerboseHeader();
 
         //---------------------+
         //    GET THE DATA    /
@@ -116,7 +87,7 @@ public class Classify implements Runnable {
 
         // Get handle to directory, create message objects from files
         // and add to training messages list.
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(trainPath)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(trainFullPath)) {
             // Add messages to messages ArrayList.
             for (Path file: stream) {
                 trainMessages.add(new Message(file, StandardCharsets.UTF_8));
@@ -136,7 +107,7 @@ public class Classify implements Runnable {
 
         // Get handle to directory, create message objects from files
         // and add to testing messages list.
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(testPath)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(testFullPath)) {
             // Add messages to messages ArrayList.
             for (Path file: stream) {
                 testMessages.add(new Message(file, StandardCharsets.UTF_8));
@@ -156,12 +127,10 @@ public class Classify implements Runnable {
         //    WRANGLE THE DATA    /
         //-----------------------+
 
-        // Train
-
+        // Get wrangled training set of messages.
         List<TokenizedMessage> wrangledTrainMessages = runTheWranglePipeline(trainMessages);
 
-        // Test
-
+        // get wrangled test set of messages.
         List<TokenizedMessage> wrangledTestMessages = runTheWranglePipeline(testMessages);
 
         //----------------------------+
@@ -305,4 +274,56 @@ public class Classify implements Runnable {
 
         return wrangledMessages;
     }
+
+
+
+    /**
+     * Prints verbose header.
+     */
+    private void printVerboseHeader() {
+
+        if (verbose.length > 0) {
+            System.out.println("Input path: " + inputPath.toString());
+            System.out.println("Algorithm: " + algorithm);
+            if (algorithm.equals("knn")) {
+                System.out.println("K: " + kforKNN);
+            }
+        }
+
+        // If very verbose, print paths to all files in input path directory, also.
+        if (verbose.length > 1) {
+
+            int trainfileCount = new File(trainFullPath.toString()).list().length;
+            System.out.println("Number of training messages: " + trainfileCount);
+
+            System.out.println("Training messages: ");
+            try (DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(trainFullPath)) {
+                for (Path file: stream) {
+                    System.out.println("    " + file.getFileName());
+                }
+            } catch (IOException | DirectoryIteratorException ex) {
+                // IOException can never be thrown by the iteration.
+                // In this snippet, it can only be thrown by newDirectoryStream.
+                System.err.println(ex);
+            }
+
+            int testfileCount = new File(testFullPath.toString()).list().length;
+            System.out.println("Number of test messages: " + testfileCount);
+
+            System.out.println("Test messages: ");
+            try (DirectoryStream<Path> stream =
+                         Files.newDirectoryStream(testFullPath)) {
+                for (Path file: stream) {
+                    System.out.println("    " + file.getFileName());
+                }
+            } catch (IOException | DirectoryIteratorException ex) {
+                // IOException can never be thrown by the iteration.
+                // In this snippet, it can only be thrown by newDirectoryStream.
+                System.err.println(ex);
+            }
+        }
+    }
+
+
 }
