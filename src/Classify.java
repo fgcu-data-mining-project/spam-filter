@@ -126,29 +126,101 @@ public class Classify implements Runnable {
             //------------------------------+
 
             // Now run knn for test set.
+            // TODO Move all the reporting into the ClassifierKNN class where it belongs.
 
             int totalNum = 0;
+            int numPredictedTrue = 0;
+            int numActualTrue = 0;
+            int numPredictedFalse = 0;
+            int numActualFalse = 0;
             int totalCorrect = 0;
+            int totalIncorrect = 0;
+            int numTP = 0;
+            int numTN = 0;
+            int numFP = 0;
+            int numFN = 0;
+
+            double nullErrorRate = 0;
             for (TokenizedMessage testMessage : wrangledTestMessages) {
                 // Predict label of test message.
                 boolean label = knn.predict(testMessage);
-                // DEBUG
-                //System.out.println("Predicted label: " + label);
-                //System.out.println("Actual label: " + testMessage.isSpam());
 
+                // Count total number of messages classified.
                 totalNum++;
-                if (label == testMessage.isSpam()) { totalCorrect++; }
+
+                // Count numbers of predictions.
+                if (label) {
+                    numPredictedTrue++;
+                } else {
+                    numPredictedFalse++;
+                }
+
+                // Count actual labels.
+                if (testMessage.isSpam()) {
+                    numActualTrue++;
+                } else {
+                    numActualFalse++;
+                }
+
+                // Count correct/incorrect predictions,
+                // and catch TP, TN, FP, FN while at it.
+                if (label == testMessage.isSpam()) {
+                    totalCorrect++;
+
+                    if (label) {
+                        numTP++;
+                    } else {
+                        numTN++;
+                    }
+                } else {
+                    totalIncorrect++;
+
+                    if (label) {
+                        numFP++;
+                    } else {
+                        numFN++;
+                    }
+                }
             }
 
-            // DEBUG
-            System.out.println("totalCorrect: " + totalCorrect);
-            System.out.println("totalNum: " + totalNum);
-            System.out.println("Accuracy: " + (totalCorrect/ (double) totalNum));
+            // Calculate null error rate.
+            String majClass = null;
+            if (numActualTrue > numActualFalse) {
+                // spam = true is the majority class.
+                majClass = "true";
+                nullErrorRate = numActualFalse / (double) totalNum;
 
+            } else {
+                // spam = false is the majority class.
+                majClass = "false";
+                nullErrorRate = numActualTrue / (double) totalNum;
+            }
 
-            //---------------------------------------------------+
-            //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
-            //-------------------------------------------------+
+            //-------------------------------------+
+            //    PRODUCE REPORT OF THE THINGS    /
+            //-----------------------------------+
+
+            // Print confusion matrix.
+            System.out.println("CONFUSION MATRIX");
+            System.out.println("================");
+            System.out.println();
+            System.out.println(String.format("%-8s   %8s   %8s", "", "Spam", "Not Spam"));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+
+            System.out.println();
+
+            System.out.println("STATISTICS");
+            System.out.println("==========");
+            System.out.println();
+            System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
+            System.out.println(String.format("%-25s %d", "Correct Predictions: ", totalCorrect));
+            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", totalIncorrect));
+            System.out.println(String.format("%-25s %f", "Accuracy: ", (totalCorrect/ (double) totalNum)));
+            System.out.println(String.format("%-25s %f", "Misclassification: ", totalIncorrect / (double) totalNum));
+            System.out.println(String.format("%-25s %f", "Precision: ", numActualTrue / (double) numPredictedTrue));
+            System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
+            System.out.println(String.format("%-25s %f", "Null Error Rate (" + majClass + "): ", nullErrorRate));
 
         }
 

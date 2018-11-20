@@ -29,7 +29,7 @@ public class Tokenizer {
                 Arrays.asList(message.subject.split("\\s+")));
 
         // Tokenize body.
-        List<String> bodyTokens = new ArrayList<String>();
+        List<String> bodyTokens = new ArrayList<>();
         for (String line : message.body) {
             List<String> lineTokens = Arrays.asList(line.split("\\s+"));
             bodyTokens.addAll(lineTokens);

@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -38,6 +39,39 @@ public class TokenizedMessage extends Message {
     //-------------------------+
     //     PUBLIC METHODS     /
     //-----------------------+
+
+    /**
+     * Gets all tokens for message in one list.
+     * @return all tokens for message
+     */
+    public List<String> getAllTokens() {
+
+        // New list with subject tokens, then add all body tokens.
+        List<String> allTokens = new ArrayList<>(this.subjectTokens);
+        allTokens.addAll(this.bodyTokens);
+
+        return allTokens;
+    }
+
+    /**
+     * Print formatted list of all tokens for message.
+     */
+    public void printAllTokens() {
+
+        List<String> allTokens = this.getAllTokens();
+
+        System.out.println("========================================");
+        System.out.println("= TOKENS FOR: " + this.getFILE_NAME());
+        System.out.println("=");
+        int numTokens = 0;
+        for (String token : allTokens) {
+            System.out.println(token);
+            numTokens++;
+        }
+        System.out.println("=");
+        System.out.println("= NUM TOKENS: " + numTokens);
+        System.out.println("========================================");
+    }
 
     @Override
     public String toString() {
