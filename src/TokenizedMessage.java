@@ -17,6 +17,10 @@ public class TokenizedMessage extends Message {
      */
     private List<String> bodyTokens;
 
+    //-----------------------+
+    //     CONSTRUCTORS     /
+    //---------------------+
+
     /**
      * Constructor
      * @param message email message
@@ -29,6 +33,35 @@ public class TokenizedMessage extends Message {
         this.body = message.body;
         this.spam = message.spam;
     }
+
+
+    //-------------------------+
+    //     PUBLIC METHODS     /
+    //-----------------------+
+
+    @Override
+    public String toString() {
+        return "TokenizedMessage{" +
+                "subjectTokens=" + subjectTokens +
+                ", bodyTokens=" + bodyTokens +
+                ", FILE_NAME='" + FILE_NAME + '\'' +
+                ", FILE_PATH='" + FILE_PATH + '\'' +
+                ", ENCODING=" + ENCODING +
+                ", subject='" + subject + '\'' +
+                ", body=" + body + '\'' +
+                ", spam=" +
+                '}';
+    }
+
+
+    //--------------------------+
+    //     PRIVATE METHODS     /
+    //------------------------+
+
+
+    //----------------------------+
+    //     GETTERS & SETTERS     /
+    //--------------------------+
 
     public List<String> getSubjectTokens() {
         return subjectTokens;
@@ -46,17 +79,4 @@ public class TokenizedMessage extends Message {
         this.bodyTokens = bodyTokens;
     }
 
-    @Override
-    public String toString() {
-        return "TokenizedMessage{" +
-                "subjectTokens=" + subjectTokens +
-                ", bodyTokens=" + bodyTokens +
-                ", FILE_NAME='" + FILE_NAME + '\'' +
-                ", FILE_PATH='" + FILE_PATH + '\'' +
-                ", ENCODING=" + ENCODING +
-                ", subject='" + subject + '\'' +
-                ", body=" + body + '\'' +
-                ", spam=" +
-                '}';
-    }
 }

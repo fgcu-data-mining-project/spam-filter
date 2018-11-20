@@ -1,7 +1,7 @@
 Email Classifier
 ===============
 
-The Email Classifier (TODO better name?) provides (multinomial?) classification of a given set of email messages. The messages are labeled spam or not spam using two core classification alogrithms and X experimental algorithms,
+The Email Classifier (TODO better name?) provides classification of a given set of email messages. The messages are labeled spam or not spam using two core classification algorithms and X experimental algorithms,
 
 Usage
 -----
@@ -18,6 +18,36 @@ Usage: Classify [-hV] [-v]... [-a=<algorithm>] [-k=<kforKNN>] PATH
   -v, --verbose       Verbose mode. Multiple -v options increase the verbosity.
   -V, --version       Print version information and exit.
 ```
+
+Data
+----
+
+The data directory provided should have the structure:
+
+```
+data
+├── test
+│   ├── 3-426msg2.txt
+│   ├── 3-426msg3.txt
+│   ├── 3-429msg0.txt
+│   ├── ...
+│   ├── spmsgc144.txt
+│   ├── spmsgc145.txt
+│   └── spmsgc146.txt
+└── train
+    ├── 3-1msg1.txt
+    ├── 3-1msg2.txt
+    ├── 3-1msg3.txt
+    ├── ...
+    ├── spmsgb97.txt
+    ├── spmsgb98.txt
+    └── spmsgb99.txt
+```
+
+The label as spam is inferred from the filename - spam messages should begin with an 's'.
+
+Algorithms
+----------
 
 ### Core Algorithms
 

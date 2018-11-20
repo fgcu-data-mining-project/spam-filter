@@ -43,6 +43,11 @@ public class Message {
      */
     protected boolean spam = false;
 
+
+    //-----------------------+
+    //     CONSTRUCTORS     /
+    //---------------------+
+
     /**
      * Constructor for empty object.
      */
@@ -88,6 +93,33 @@ public class Message {
         }
     }
 
+
+    //-------------------------+
+    //     PUBLIC METHODS     /
+    //-----------------------+
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "FILE_NAME='" + FILE_NAME + '\'' +
+                ", FILE_PATH='" + FILE_PATH + '\'' +
+                ", ENCODING=" + ENCODING +
+                ", subject='" + subject + '\'' +
+                ", body=" + body + '\'' +
+                ", spam=" +
+                '}';
+    }
+
+
+    //--------------------------+
+    //     PRIVATE METHODS     /
+    //------------------------+
+
+
+    //----------------------------+
+    //     GETTERS & SETTERS     /
+    //--------------------------+
+
     public String getFILE_NAME() {
         return FILE_NAME;
     }
@@ -124,15 +156,4 @@ public class Message {
         this.spam = isSpam;
     }
 
-    @Override
-    public String toString() {
-        return "Message{" +
-                "FILE_NAME='" + FILE_NAME + '\'' +
-                ", FILE_PATH='" + FILE_PATH + '\'' +
-                ", ENCODING=" + ENCODING +
-                ", subject='" + subject + '\'' +
-                ", body=" + body + '\'' +
-                ", spam=" +
-                '}';
-    }
 }

@@ -1,6 +1,7 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * KNN classification of plain text messages.
  */
@@ -18,6 +19,10 @@ public class ClassifierKNN {
      */
     private List<TokenizedMessage> tokenizedTrainMessages;
 
+    //---------------------+
+    //    CONSTRUCTORS    /
+    //-------------------+
+
     // TODO Which stats to store in the class?
 
     public ClassifierKNN(List<TokenizedMessage> tokenizedMessages, int k) {
@@ -31,6 +36,11 @@ public class ClassifierKNN {
 
         // TODO Return stats.
     }
+
+
+    //-----------------------+
+    //    PUBLIC METHODS    /
+    //---------------------+
 
     // Predict label for a message based on training data passed in during instantiation.
     public Boolean predict(TokenizedMessage tkTestMessage) {
@@ -92,6 +102,11 @@ public class ClassifierKNN {
         return isSpam;
     }
 
+
+    //------------------------+
+    //    PRIVATE METHODS    /
+    //----------------------+
+
     /**
      * Calculate (cosine angle) similarity between tokenized messages.
      * TODO Make static?
@@ -120,6 +135,7 @@ public class ClassifierKNN {
         // dot product by the product of the lengths of the vectors of tokens.
         return ((double) intersection.size()) / (lengthMssge1 * lengthMssge2);
     }
+
 
     //--------------------------+
     //    GETTERS & SETTERS    /
