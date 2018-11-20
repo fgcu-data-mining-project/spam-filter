@@ -73,55 +73,24 @@ public class Classify implements Runnable {
         trainFullPath = Paths.get(inputPath.toString(), trainDataPath.toString());
         testFullPath = Paths.get(inputPath.toString(), testDataPath.toString());
 
+
         //------------------------------------+
         //    DO VERBOSE THINGS IF NEEDED    /
         //----------------------------------+
 
         printVerboseHeader();
 
+
         //---------------------+
         //    GET THE DATA    /
         //-------------------+
 
         // Training data.
+        trainMessages = loadData(trainFullPath);
 
-        // Get handle to directory, create message objects from files
-        // and add to training messages list.
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(trainFullPath)) {
-            // Add messages to messages ArrayList.
-            for (Path file: stream) {
-                trainMessages.add(new Message(file, StandardCharsets.UTF_8));
-            }
+        // Testing data.
+        testMessages = loadData(testFullPath);
 
-            // DEBUG
-            //for (Message message : messages) {
-            //    System.out.println(message);
-            //}
-        } catch (IOException | DirectoryIteratorException ex) {
-            // IOException can never be thrown by the iteration.
-            // In this snippet, it can only be thrown by newDirectoryStream.
-            System.err.println(ex);
-        }
-
-        // Test data.
-
-        // Get handle to directory, create message objects from files
-        // and add to testing messages list.
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(testFullPath)) {
-            // Add messages to messages ArrayList.
-            for (Path file: stream) {
-                testMessages.add(new Message(file, StandardCharsets.UTF_8));
-            }
-
-            // DEBUG
-            //for (Message message : messages) {
-            //    System.out.println(message);
-            //}
-        } catch (IOException | DirectoryIteratorException ex) {
-            // IOException can never be thrown by the iteration.
-            // In this snippet, it can only be thrown by newDirectoryStream.
-            System.err.println(ex);
-        }
 
         //-------------------------+
         //    WRANGLE THE DATA    /
@@ -132,6 +101,7 @@ public class Classify implements Runnable {
 
         // get wrangled test set of messages.
         List<TokenizedMessage> wrangledTestMessages = runTheWranglePipeline(testMessages);
+
 
         //----------------------------+
         //    LOAD THE CLASSIFIER    /
@@ -168,6 +138,7 @@ public class Classify implements Runnable {
             System.out.println("totalNum: " + totalNum);
             System.out.println("Accuracy: " + (totalCorrect/ (double) totalNum));
 
+
             //---------------------------------------------------+
             //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
             //-------------------------------------------------+
@@ -183,7 +154,14 @@ public class Classify implements Runnable {
         }
     }
 
-    // TODO Not a serious method name! Will be refactored away.
+    /**
+     * Wrangle messages:
+     *  - tokenize
+     *  - normalize
+     *  - remove stop words
+     * @param messages list of messages
+     * @return list of wrangled messages
+     */
     private ArrayList<TokenizedMessage> runTheWranglePipeline(ArrayList<Message> messages) {
 
         // Create empty list to store wrangled messages.
@@ -275,7 +253,35 @@ public class Classify implements Runnable {
         return wrangledMessages;
     }
 
+    /**
+     * Create list of Message objects from directory of text files.
+     * @param fullPathToData full path to the directory
+     * @return list of Message objects
+     */
+    private ArrayList<Message> loadData(Path fullPathToData) {
+        // Create list to store messages.
+        ArrayList<Message> messages = new ArrayList<>();
 
+        // Get handle to directory, create message objects from files
+        // and add to training messages list.
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(fullPathToData)) {
+            // Add messages to messages ArrayList.
+            for (Path file: stream) {
+                messages.add(new Message(file, StandardCharsets.UTF_8));
+            }
+
+            // DEBUG
+            //for (Message message : messages) {
+            //    System.out.println(message);
+            //}
+        } catch (IOException | DirectoryIteratorException ex) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(ex);
+        }
+
+        return messages;
+    }
 
     /**
      * Prints verbose header.
@@ -324,6 +330,5 @@ public class Classify implements Runnable {
             }
         }
     }
-
 
 }
