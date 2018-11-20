@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 
@@ -45,10 +46,12 @@ public class TokenizedMessage extends Message {
      * @return all tokens for message
      */
     public List<String> getAllTokens() {
-
         // New list with subject tokens, then add all body tokens.
         List<String> allTokens = new ArrayList<>(this.subjectTokens);
         allTokens.addAll(this.bodyTokens);
+
+        // Remove duplicates.
+        allTokens = new ArrayList<>(new HashSet<>(allTokens));
 
         return allTokens;
     }

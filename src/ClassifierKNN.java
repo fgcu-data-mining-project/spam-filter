@@ -38,8 +38,6 @@ public class ClassifierKNN {
         // Vector similarity w/o weighting.
 
         this.tokenizedTrainMessages = tokenizedMessages;
-
-        // TODO Return stats.
     }
 
 
@@ -120,6 +118,7 @@ public class ClassifierKNN {
     /**
      * Calculate (cosine angle) similarity between tokenized messages.
      * TODO Make public and static?
+     * TODO Add term weighting?
      * @param tkMessage1 tokenized message
      * @param tkMessage2 tokenized message
      * @return completely dissimilar 0.0 to identical 1.0
