@@ -16,9 +16,9 @@ import static java.util.stream.Collectors.toList;
         version = "Email Classifier 0.1.1")
 public class Classify implements Runnable {
 
-  @Option(names = { "-s", "--stopwords" },
-      description = "Remove stopwords from messages during tokens wrangling.")
-  private boolean removeStopWords = false;
+    @Option(names = { "-s", "--stopwords" },
+        description = "Remove stopwords from messages during tokens wrangling.")
+    private boolean removeStopWords = false;
 
     @Option(names = { "-v", "--verbose" },
             description = "Verbose mode. Multiple -v options increase the verbosity.")
@@ -325,7 +325,7 @@ public class Classify implements Runnable {
                     count++;
                     // DEBUG
                     //System.out.println("REMOVING: " + bodyTokens.get(i));
-                  if (removeStopWords) bodyTokens.remove(i);
+                    if (removeStopWords) bodyTokens.remove(i);
                 }
             }
             // Replace with pared down list.
