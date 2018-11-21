@@ -24,27 +24,34 @@ public class Classify implements Runnable {
             description = "Verbose mode. Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
+    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO...")
+    private String algorithm = "knn";
+
+    @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
+    private int kforKNN = 3;
+
+    @Option(names = {"--trainPath"}, description = "Path within data folder to training data.")
+    private String trainDataPath = "train";
+
+    @Option(names = {"--testPath"}, description = "Path within data folder to test data.")
+    private String testDataPath = "test";
+
     @Parameters(arity = "1", paramLabel = "PATH",
             description = "A single path to a directory containing training and testing sets.")
     private Path inputPath;
 
-    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO EXPERIMENTAL...")
-    private String algorithm = "KNN";
-
-    // TODO Add option for setting k with the default of 3.
-    @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
-    private int kforKNN = 3;
-
-    // TODO Add option for training data path with default of data/train.
-
-    // TODO Add option for test data path with default of data/test.
-
-    private Path trainDataPath = Paths.get("train");
-
+    /**
+     * The full path to the training data,
+     * which is assembled from arguments,
+     * or defaults to ./data/train.
+     */
     private Path trainFullPath;
 
-    private Path testDataPath = Paths.get("test");
-
+    /**
+     * The full path to the training data,
+     * which is assembled from arguments,
+     * or defaults to ./data/test.
+     */
     private Path testFullPath;
 
     /**
@@ -74,8 +81,8 @@ public class Classify implements Runnable {
         //-----------------------+
 
         // TODO Clean this up and add optional params to pass in paths.
-        trainFullPath = Paths.get(inputPath.toString(), trainDataPath.toString());
-        testFullPath = Paths.get(inputPath.toString(), testDataPath.toString());
+        trainFullPath = Paths.get(inputPath.toString(), trainDataPath);
+        testFullPath = Paths.get(inputPath.toString(), testDataPath);
 
 
         //------------------------------------+
@@ -123,29 +130,101 @@ public class Classify implements Runnable {
             //------------------------------+
 
             // Now run knn for test set.
+            // TODO Move all the reporting into the ClassifierKNN class where it belongs.
 
             int totalNum = 0;
+            int numPredictedTrue = 0;
+            int numActualTrue = 0;
+            int numPredictedFalse = 0;
+            int numActualFalse = 0;
             int totalCorrect = 0;
+            int totalIncorrect = 0;
+            int numTP = 0;
+            int numTN = 0;
+            int numFP = 0;
+            int numFN = 0;
+
+            double nullErrorRate = 0;
             for (TokenizedMessage testMessage : wrangledTestMessages) {
                 // Predict label of test message.
                 boolean label = knn.predict(testMessage);
-                // DEBUG
-                //System.out.println("Predicted label: " + label);
-                //System.out.println("Actual label: " + testMessage.isSpam());
 
+                // Count total number of messages classified.
                 totalNum++;
-                if (label == testMessage.isSpam()) { totalCorrect++; }
+
+                // Count numbers of predictions.
+                if (label) {
+                    numPredictedTrue++;
+                } else {
+                    numPredictedFalse++;
+                }
+
+                // Count actual labels.
+                if (testMessage.isSpam()) {
+                    numActualTrue++;
+                } else {
+                    numActualFalse++;
+                }
+
+                // Count correct/incorrect predictions,
+                // and catch TP, TN, FP, FN while at it.
+                if (label == testMessage.isSpam()) {
+                    totalCorrect++;
+
+                    if (label) {
+                        numTP++;
+                    } else {
+                        numTN++;
+                    }
+                } else {
+                    totalIncorrect++;
+
+                    if (label) {
+                        numFP++;
+                    } else {
+                        numFN++;
+                    }
+                }
             }
 
-            // DEBUG
-            System.out.println("totalCorrect: " + totalCorrect);
-            System.out.println("totalNum: " + totalNum);
-            System.out.println("Accuracy: " + (totalCorrect/ (double) totalNum));
+            // Calculate null error rate.
+            String majClass = null;
+            if (numActualTrue > numActualFalse) {
+                // spam = true is the majority class.
+                majClass = "true";
+                nullErrorRate = numActualFalse / (double) totalNum;
 
+            } else {
+                // spam = false is the majority class.
+                majClass = "false";
+                nullErrorRate = numActualTrue / (double) totalNum;
+            }
 
-            //---------------------------------------------------+
-            //    TODO PRODUCE / RETURN REPORT OF THE THINGS    /
-            //-------------------------------------------------+
+            //-------------------------------------+
+            //    PRODUCE REPORT OF THE THINGS    /
+            //-----------------------------------+
+
+            // Print confusion matrix.
+            System.out.println("CONFUSION MATRIX");
+            System.out.println("================");
+            System.out.println();
+            System.out.println(String.format("%-8s   %8s   %8s", "", "Spam", "Not Spam"));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+
+            System.out.println();
+
+            System.out.println("STATISTICS");
+            System.out.println("==========");
+            System.out.println();
+            System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
+            System.out.println(String.format("%-25s %d", "Correct Predictions: ", totalCorrect));
+            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", totalIncorrect));
+            System.out.println(String.format("%-25s %f", "Accuracy: ", (totalCorrect/ (double) totalNum)));
+            System.out.println(String.format("%-25s %f", "Misclassification: ", totalIncorrect / (double) totalNum));
+            System.out.println(String.format("%-25s %f", "Precision: ", numActualTrue / (double) numPredictedTrue));
+            System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
+            System.out.println(String.format("%-25s %f", "Null Error Rate (" + majClass + "): ", nullErrorRate));
 
         }
 
@@ -254,6 +333,16 @@ public class Classify implements Runnable {
             // DEBUG
             //System.out.println("Removed " + count + " stop words from body.");
         }
+
+
+        //=======================+
+        //     TODO Stemming     |
+        //=======================+
+
+
+        //=============================+
+        //     TODO TERM WEIGHTING     |
+        //=============================+
 
         return wrangledMessages;
     }

@@ -25,6 +25,11 @@ public class ClassifierKNN {
 
     // TODO Which stats to store in the class?
 
+    /**
+     * KNN Classifier for tokenized messages.
+     * @param tokenizedMessages a TokenizedMessage
+     * @param k k for knn
+     */
     public ClassifierKNN(List<TokenizedMessage> tokenizedMessages, int k) {
 
         // Set the k.
@@ -33,8 +38,6 @@ public class ClassifierKNN {
         // Vector similarity w/o weighting.
 
         this.tokenizedTrainMessages = tokenizedMessages;
-
-        // TODO Return stats.
     }
 
 
@@ -42,7 +45,12 @@ public class ClassifierKNN {
     //    PUBLIC METHODS    /
     //---------------------+
 
-    // Predict label for a message based on training data passed in during instantiation.
+    /**
+     * Predict label for a message based on training data
+     * passed in during instantiation of ClassifierKNN.
+     * @param tkTestMessage a TokenizedMessage
+     * @return the label - true if spam
+     */
     public Boolean predict(TokenizedMessage tkTestMessage) {
 
         // Map for storing similarities.
@@ -109,25 +117,25 @@ public class ClassifierKNN {
 
     /**
      * Calculate (cosine angle) similarity between tokenized messages.
-     * TODO Make static?
+     * TODO Make public and static?
+     * TODO Add term weighting?
      * @param tkMessage1 tokenized message
      * @param tkMessage2 tokenized message
      * @return completely dissimilar 0.0 to identical 1.0
      */
     private double similarity(TokenizedMessage tkMessage1, TokenizedMessage tkMessage2) {
 
-        // TODO Move this to an appropriate place.
-        // Remove duplicates by creating sets.
-        List<String> bodyTokensSet1 = new ArrayList<>(new HashSet<>(tkMessage1.getBodyTokens()));
-        List<String> bodyTokensSet2 = new ArrayList<>(new HashSet<>(tkMessage2.getBodyTokens()));
+        // Get tokens.
+        List<String> allTokensSet1 = tkMessage1.getAllTokens();
+        List<String> allTokensSet2 = tkMessage2.getAllTokens();
 
-        // Get length of deduped vectors.
-        double lengthMssge1 = Math.sqrt(bodyTokensSet1.size());
-        double lengthMssge2 = Math.sqrt(bodyTokensSet2.size());
+        // Get length of vectors.
+        double lengthMssge1 = Math.sqrt(allTokensSet1.size());
+        double lengthMssge2 = Math.sqrt(allTokensSet2.size());
 
         // Find intersection between sets of body tokens.
-        List<String> intersection = new ArrayList<>(bodyTokensSet1);
-        intersection.retainAll(bodyTokensSet2);
+        List<String> intersection = new ArrayList<>(allTokensSet1);
+        intersection.retainAll(allTokensSet2);
 
         // With all token weights 1, the size of the intersection of the
         // sets of tokens is equivalent to A dot B.
