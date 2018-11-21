@@ -13,25 +13,25 @@ public class NaiveBayes {
   // Maps token to probability it will appear in that type of message
   // replacing the Map with an ArrayList using Entry Objects for sorting...
   // this is problematic because there is no easy way to update these... I hate Java
-//  private Map<String, Double> probabilities;
-  private ArrayList<Entry<String>> probabilities;
+  private Map<String, Double> probabilities;
+//  private ArrayList<Entry<String>> probabilities;
 
   private final String MODEL_SAVE_DIR = "./NB_models";
 
-  private class Entry <T> implements Comparable<Entry<T>>{
-    public T token;
-    public Double probability;
-    public Entry(T token, Double p){
-      this.token=token;
-      probability=p;
-    }
-    public int compareTo(Entry<T> e){
-      // if this is larger returns > 0
-      // if equal returns 0
-      // if this is less than e returns < 0
-      return (int) (e.probability - this.probability);
-    }
-  }
+//  private class Entry <T> implements Comparable<Entry<T>>{
+//    public T token;
+//    public Double probability;
+//    public Entry(T token, Double p){
+//      this.token=token;
+//      probability=p;
+//    }
+//    public int compareTo(Entry<T> e){
+//      // if this is larger returns > 0
+//      // if equal returns 0
+//      // if this is less than e returns < 0
+//      return (int) (e.probability - this.probability);
+//    }
+//  }
 
   // default constructor. initializes to an untrained model
   NaiveBayes() {
@@ -54,7 +54,7 @@ public class NaiveBayes {
     hamCounts.put("##msgCount##", 0);
     spamCounts = new HashMap<>();
     spamCounts.put("##msgCount##", 0);
-    probabilities = new ArrayList<>();
+    probabilities = new HashMap<>(); // I need this to be k,v pairs
   }
 
   void loadModel (String modelName) {
@@ -82,7 +82,7 @@ public class NaiveBayes {
       fileStream = Files.lines(Paths.get("$filename.probs"));
       fileStream.forEachOrdered(line -> {
         String s[] = line.split(",");
-        probabilities.add(new Entry<>(s[0], Double.valueOf(s[1])));
+        probabilities.put(s[0], Double.valueOf(s[1]));
       });
 
       fileStream.close();
@@ -136,7 +136,7 @@ public class NaiveBayes {
 
 
   public void setProbability(String token, Double prob) {
-    probabilities.add(token, prob);
+    probabilities.put(token, prob);
   }
 
   public Double getProbability(String token) {
