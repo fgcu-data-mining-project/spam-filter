@@ -16,6 +16,10 @@ import static java.util.stream.Collectors.toList;
         version = "Email Classifier 0.1.1")
 public class Classify implements Runnable {
 
+  @Option(names = { "-s", "--stopwords" },
+      description = "Remove stopwords from messages during tokens wrangling.")
+  private boolean removeStopWords = false;
+
     @Option(names = { "-v", "--verbose" },
             description = "Verbose mode. Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
@@ -212,6 +216,7 @@ public class Classify implements Runnable {
                 "to", "was", "what", "when", "where", "who", "will", "with"};
         Set stopWords = new HashSet<>(Arrays.asList(defaultStopWords));
 
+
         // TODO More efficient way to do this?
         for (TokenizedMessage tkMessage : wrangledMessages) {
 
@@ -226,7 +231,7 @@ public class Classify implements Runnable {
                     count++;
                     // DEBUG
                     //System.out.println("REMOVING: " + subjectTokens.get(i));
-                    subjectTokens.remove(i);
+                    if (removeStopWords) subjectTokens.remove(i);
                 }
             }
             // Replace with pared down list.
@@ -241,7 +246,7 @@ public class Classify implements Runnable {
                     count++;
                     // DEBUG
                     //System.out.println("REMOVING: " + bodyTokens.get(i));
-                    bodyTokens.remove(i);
+                  if (removeStopWords) bodyTokens.remove(i);
                 }
             }
             // Replace with pared down list.
