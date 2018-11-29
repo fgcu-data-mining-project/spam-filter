@@ -24,7 +24,7 @@ public class Classify implements Runnable {
             description = "Verbose mode. Multiple -v options increase the verbosity.")
     private boolean[] verbose = new boolean[0];
 
-    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, TODO...")
+    @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, DC")
     private String algorithm = "knn";
 
     @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
@@ -226,6 +226,128 @@ public class Classify implements Runnable {
             System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
             System.out.println(String.format("%-25s %f", "Null Error Rate (" + majClass + "): ", nullErrorRate));
 
+        }
+
+        // TODO Refactor all of this away to appropriate places.
+        if (algorithm.toLowerCase().equals("dc")) {
+            // Create the auto-trained instance of the categorizer.
+            ClassifierDocumentCategorizer dc = new ClassifierDocumentCategorizer(wrangledTrainMessages);
+
+            // Classify test messages.
+            // Counts.
+            int totalNum = 0;
+            int numPredictedTrue = 0;
+            int numPredictedFalse = 0;
+            int numActualTrue = 0;
+            int numActualFalse = 0;
+            int totalCorrect = 0;
+            int totalIncorrect = 0;
+            int numTP = 0;
+            int numTN = 0;
+            int numFP = 0;
+            int numFN = 0;
+
+            // Classify test messages.
+            for (TokenizedMessage tkTestkMsg : wrangledTestMessages) {
+
+                //     List<String> body = msg.getBody();
+                //     String[] bodyText = { body.get(0) };
+                //     System.out.println(bodyText[0]);
+
+                //     String bodyText = null;
+                //     for (String line : msg.getBody()) {
+                //         bodyText += line;
+                //         //System.out.println(line);
+                //     }
+
+                // Classify message by passing tokens in as array.
+                //double[] outcomes = dc.predict(tkTestkMsg);
+
+                // Store outcome data.
+                //Map<String, Double> categoryOutcomes = new HashMap<>();
+                //for (int i = 0; i < categorizer.getNumberOfCategories(); i++) {
+                //    categoryOutcomes.put(categorizer.getCategory(i), outcomes[i]);
+                //}
+
+                // Determine predicted category.
+                //boolean label = false;
+                //if (categoryOutcomes.get("spam") > categoryOutcomes.get("ham")) {
+                //    label = true;
+                //} else {
+                //    label = false;
+                //}
+
+                boolean label = dc.predict(tkTestkMsg);
+
+                // Count total number of messages classified.
+                totalNum++;
+
+                // Count numbers of predictions.
+                if (label) {
+                    numPredictedTrue++;
+                } else {
+                    numPredictedFalse++;
+                }
+
+                // Count actual labels.
+                if (tkTestkMsg.isSpam()) {
+                    numActualTrue++;
+                } else {
+                    numActualFalse++;
+                }
+
+                // Count correct/incorrect predictions,
+                // and catch TP, TN, FP, FN while at it.
+                if (label == tkTestkMsg.isSpam()) {
+                    totalCorrect++;
+
+                    if (label) {
+                        numTP++;
+                    } else {
+                        numTN++;
+                    }
+                } else {
+                    totalIncorrect++;
+
+                    if (label) {
+                        numFP++;
+                    } else {
+                        numFN++;
+                    }
+                }
+
+                // Print stats.
+                System.out.println(tkTestkMsg.getFILE_NAME() + " -> " + label);
+                if (label == tkTestkMsg.isSpam()) {
+                    System.out.println("correct");
+                } else {
+                    System.out.println("INCORRECT");
+                }
+                //System.out.println(categoryOutcomes);
+
+                System.out.println();
+            }
+
+            // Print confusion matrix.
+            System.out.println("CONFUSION MATRIX");
+            System.out.println("================");
+            System.out.println();
+            System.out.println(String.format("%-8s   %8s   %8s", "", "Spam", "Not Spam"));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
+            System.out.println(String.format("%-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+
+            System.out.println();
+
+            System.out.println("STATISTICS");
+            System.out.println("==========");
+            System.out.println();
+            System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
+            System.out.println(String.format("%-25s %d", "Correct Predictions: ", totalCorrect));
+            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", totalIncorrect));
+            System.out.println(String.format("%-25s %f", "Accuracy: ", (totalCorrect/ (double) totalNum)));
+            System.out.println(String.format("%-25s %f", "Misclassification: ", totalIncorrect / (double) totalNum));
+            System.out.println(String.format("%-25s %f", "Precision: ", numTP/ (double) (numTP + numFP))); // TP/(TP+FP)
+            System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
         }
 
         // TODO Refactor all of this away to appropriate places.

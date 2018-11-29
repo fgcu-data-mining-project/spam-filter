@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 
 /**
  * KNN classification of plain text messages.
+ * TODO Create a Classifier interface or base class?
  */
 public class ClassifierKNN {
 

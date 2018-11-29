@@ -79,9 +79,20 @@ java Classify -a knn -k 5 ./data
 To classify messages using Naive Bayes:
 
 ```
-java Classify -a NB ~/some/place/with/data
+java Classify -a nb ~/some/place/with/data
 ```
 
 ### Experimental Algorithms
 
-TODO
+Additional experimental classification algorithms are included.
+
+NOTE: Messages can be provided in the same format as for the core classifiers - reformatting is handled at runtime as needed.
+
+#### Apache OpenNLP Classification Tools
+
+The open source [Apache OpenNLP library](https://opennlp.apache.org/) provides a variety of tools in its machine learning based toolkit, one of which is the [Document Categorizer](https://opennlp.apache.org/docs/1.9.0/manual/opennlp.html#tools.doccat) which can be used to categorize (classify) text documents by training a model with labeled training documents. 
+
+To classify messages using the Apache OpenNLP Document Categorizer:
+```
+java Classify -a dc ~/some/place/with/data
+```
