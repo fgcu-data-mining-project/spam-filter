@@ -90,7 +90,7 @@ NOTE: Messages can be provided in the same format as for the core classifiers - 
 
 #### Apache OpenNLP Classification Tools
 
-The open source [Apache OpenNLP library](https://opennlp.apache.org/) provides a variety of tools in its machine learning based toolkit, one of which is the [Document Categorizer](https://opennlp.apache.org/docs/1.9.0/manual/opennlp.html#tools.doccat) which can be used to categorize (classify) text documents by training a model with labeled training documents. 
+The open source [Apache OpenNLP library](https://opennlp.apache.org/) provides a variety of tools in its machine learning based toolkit, one of which is the [Document Categorizer](https://opennlp.apache.org/docs/1.9.0/manual/opennlp.html#tools.doccat). The OpenNLP DocumentCategorizerME class can be used to categorize (classify) text documents by training a model with annotated training documents. 
 
 To classify messages using the Apache OpenNLP Document Categorizer:
 ```

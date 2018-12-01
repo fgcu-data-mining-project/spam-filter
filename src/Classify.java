@@ -27,6 +27,10 @@ public class Classify implements Runnable {
     @Option(names = {"-a", "--algorithm"}, description = "KNN, NB, DC")
     private String algorithm = "knn";
 
+    // TODO Add options for setting OpenNLP DocumentCategorizerME parameters.
+
+    // TODO Add option for running cross-validation.
+
     @Option(names = {"-k", "--k"}, description = "Number of nearest neighbors - the K in KNN.")
     private int kforKNN = 3;
 
