@@ -1,3 +1,5 @@
+package classifier.messagetypes;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -8,7 +10,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * Message containing the data and metadata from
+ * classifier.messagetypes.Message containing the data and metadata from
  * a parsed email message.
  */
 public class Message {
@@ -56,6 +58,7 @@ public class Message {
     /**
      * Constructor.
      * @param message path to the message to be parsed
+     * @param encoding encoding for a BufferedReader instance
      */
     public Message(Path message, Charset encoding) {
 
@@ -100,7 +103,7 @@ public class Message {
 
     @Override
     public String toString() {
-        return "Message{" +
+        return "classifier.messagetypes.Message{" +
                 "FILE_NAME='" + FILE_NAME + '\'' +
                 ", FILE_PATH='" + FILE_PATH + '\'' +
                 ", ENCODING=" + ENCODING +

@@ -1,3 +1,7 @@
+package classifier.classifiers.core;
+
+import classifier.messagetypes.TokenizedMessage;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,7 +32,7 @@ public class ClassifierKNN {
 
     /**
      * KNN Classifier for tokenized messages.
-     * @param tokenizedMessages a TokenizedMessage
+     * @param tokenizedMessages a classifier.messagetypes.TokenizedMessage
      * @param k k for knn
      */
     public ClassifierKNN(List<TokenizedMessage> tokenizedMessages, int k) {
@@ -48,8 +52,8 @@ public class ClassifierKNN {
 
     /**
      * Predict label for a message based on training data
-     * passed in during instantiation of ClassifierKNN.
-     * @param tkTestMessage a TokenizedMessage
+     * passed in during instantiation of classifier.classifiers.core.ClassifierKNN.
+     * @param tkTestMessage a classifier.messagetypes.TokenizedMessage
      * @return the label - true if spam
      */
     public Boolean predict(TokenizedMessage tkTestMessage) {

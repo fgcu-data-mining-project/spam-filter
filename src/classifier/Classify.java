@@ -1,9 +1,16 @@
+package classifier;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
+import classifier.classifiers.core.ClassifierKNN;
+import classifier.classifiers.experimental.ClassifierDocumentCategorizer;
+import classifier.messagetypes.Message;
+import classifier.messagetypes.TokenizedMessage;
+import classifier.utils.Tokenizer;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -12,7 +19,7 @@ import picocli.CommandLine.Parameters;
 import static java.util.stream.Collectors.toList;
 
 
-@Command(name = "Classify", mixinStandardHelpOptions = true,
+@Command(name = "classifier.Classify", mixinStandardHelpOptions = true,
         version = "Email Classifier 0.1.1")
 public class Classify implements Runnable {
 
@@ -134,7 +141,7 @@ public class Classify implements Runnable {
             //------------------------------+
 
             // Now run knn for test set.
-            // TODO Move all the reporting into the ClassifierKNN class where it belongs.
+            // TODO Move all the reporting into the classifier.classifiers.core.ClassifierKNN class where it belongs.
 
             int totalNum = 0;
             int numPredictedTrue = 0;
@@ -237,7 +244,7 @@ public class Classify implements Runnable {
             // Create the auto-trained instance of the categorizer.
             ClassifierDocumentCategorizer dc = new ClassifierDocumentCategorizer(wrangledTrainMessages);
 
-            // Classify test messages.
+            // classifier.Classify test messages.
             // Counts.
             int totalNum = 0;
             int numPredictedTrue = 0;
@@ -251,7 +258,7 @@ public class Classify implements Runnable {
             int numFP = 0;
             int numFN = 0;
 
-            // Classify test messages.
+            // classifier.Classify test messages.
             for (TokenizedMessage tkTestkMsg : wrangledTestMessages) {
 
                 //     List<String> body = msg.getBody();
@@ -264,7 +271,7 @@ public class Classify implements Runnable {
                 //         //System.out.println(line);
                 //     }
 
-                // Classify message by passing tokens in as array.
+                // classifier.Classify message by passing tokens in as array.
                 //double[] outcomes = dc.predict(tkTestkMsg);
 
                 // Store outcome data.
@@ -386,7 +393,7 @@ public class Classify implements Runnable {
         }
 
         // DEBUG
-        //for (TokenizedMessage wrMessage : wrangledMessages) {
+        //for (classifier.messagetypes.TokenizedMessage wrMessage : wrangledMessages) {
         //    System.out.println(wrMessage);
         //}
 
@@ -406,7 +413,7 @@ public class Classify implements Runnable {
         }
 
         // DEBUG
-        //for (TokenizedMessage wrMessage : wrangledMessages) {
+        //for (classifier.messagetypes.TokenizedMessage wrMessage : wrangledMessages) {
         //    System.out.println(wrMessage);
         //}
 
@@ -474,9 +481,9 @@ public class Classify implements Runnable {
     }
 
     /**
-     * Create list of Message objects from directory of text files.
+     * Create list of classifier.messagetypes.Message objects from directory of text files.
      * @param fullPathToData full path to the directory
-     * @return list of Message objects
+     * @return list of classifier.messagetypes.Message objects
      */
     private ArrayList<Message> loadData(Path fullPathToData) {
         // Create list to store messages.
@@ -491,7 +498,7 @@ public class Classify implements Runnable {
             }
 
             // DEBUG
-            //for (Message message : messages) {
+            //for (classifier.messagetypes.Message message : messages) {
             //    System.out.println(message);
             //}
         } catch (IOException | DirectoryIteratorException ex) {

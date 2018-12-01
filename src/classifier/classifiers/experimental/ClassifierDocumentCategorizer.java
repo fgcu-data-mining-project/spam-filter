@@ -1,3 +1,6 @@
+package classifier.classifiers.experimental;
+
+import classifier.messagetypes.TokenizedMessage;
 import opennlp.tools.doccat.*;
 import opennlp.tools.util.MarkableFileInputStreamFactory;
 import opennlp.tools.util.ObjectStream;
@@ -32,6 +35,7 @@ public class ClassifierDocumentCategorizer {
     /**
      * Constructor.
      * Trains model with passed-in set of tokenized messages upon instantiation.
+     * @param tkMessages tokenized messages
      */
     public ClassifierDocumentCategorizer(List<TokenizedMessage> tkMessages) {
         // Set up temporary directory for storing model.
@@ -66,7 +70,7 @@ public class ClassifierDocumentCategorizer {
         List<String> allTokens = tkMessage.getAllTokens();
         String[] allTokensArr = allTokens.toArray(new String[0]);
 
-        // Get the model created by the generateTrainingFile(List<TokenizedMessage>) method.
+        // Get the model created by the generateTrainingFile(List<classifier.messagetypes.TokenizedMessage>) method.
         InputStream modelIn = null;
         try {
             modelIn = new FileInputStream(new File(tempDir + "/en-email.model"));

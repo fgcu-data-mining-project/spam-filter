@@ -9,7 +9,7 @@ Usage
 The general usage of the commandline application is:
 
 ```
-Usage: Classify [-hV] [-v]... [--testPath=<testDataPath>]
+Usage: classifier.Classify [-hV] [-v]... [--testPath=<testDataPath>]
                 [--trainPath=<trainDataPath>] [-a=<algorithm>] [-k=<kforKNN>]
                 PATH
       PATH            A single path to a directory containing training and testing
@@ -67,19 +67,19 @@ Two core classification algorithms are provided: K-Nearest Neighbors (KNN) and N
 To classify messages using KNN with default K of 3:
 
 ```
-java Classify -a knn ./data
+java classifier.Classify -a knn ./data
 ```
 
 To classify messages using KNN with K of 5:
 
 ```
-java Classify -a knn -k 5 ./data
+java classifier.Classify -a knn -k 5 ./data
 ```
 
 To classify messages using Naive Bayes:
 
 ```
-java Classify -a nb ~/some/place/with/data
+java classifier.Classify -a nb ~/some/place/with/data
 ```
 
 ### Experimental Algorithms
@@ -94,5 +94,5 @@ The open source [Apache OpenNLP library](https://opennlp.apache.org/) provides a
 
 To classify messages using the Apache OpenNLP Document Categorizer:
 ```
-java Classify -a dc ~/some/place/with/data
+java classifier.Classify -a dc ~/some/place/with/data
 ```

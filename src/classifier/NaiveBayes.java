@@ -1,3 +1,7 @@
+package classifier;
+
+import classifier.messagetypes.TokenizedMessage;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -144,7 +148,7 @@ public class NaiveBayes {
   }
 
 
-  // Take the messages from Classify. Stream through the messages twice,
+  // Take the messages from classifier.Classify. Stream through the messages twice,
   //  once to process spam, second time for ham.
   void train(List<TokenizedMessage> messages) {
 //    1)

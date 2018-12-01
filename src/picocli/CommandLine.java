@@ -5719,7 +5719,7 @@ public class CommandLine {
          * Enhances the standard <a href="https://docs.oracle.com/javase/8/docs/api/java/util/ResourceBundle.html">ResourceBundle</a>
          * with support for String arrays and qualified keys: keys that may or may not be prefixed with the fully qualified command name.
          * <p>Example properties resource bundle:</p><pre>
-         * # Usage Help Message Sections
+         * # Usage Help classifier.messagetypes.Message Sections
          * # ---------------------------
          * # Numbered resource keys can be used to create multi-line sections.
          * usage.headerHeading = This is my app. There are other apps like it but this one is mine.%n

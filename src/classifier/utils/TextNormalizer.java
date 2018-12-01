@@ -1,5 +1,5 @@
-
-// TODO Remove TextNormalizer?
+package classifier.utils;
+// TODO Remove classifier.utils.TextNormalizer?
 
 public class TextNormalizer {
 

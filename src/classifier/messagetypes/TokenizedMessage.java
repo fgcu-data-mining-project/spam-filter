@@ -1,3 +1,5 @@
+package classifier.messagetypes;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -78,7 +80,7 @@ public class TokenizedMessage extends Message {
 
     @Override
     public String toString() {
-        return "TokenizedMessage{" +
+        return "classifier.messagetypes.TokenizedMessage{" +
                 "subjectTokens=" + subjectTokens +
                 ", bodyTokens=" + bodyTokens +
                 ", FILE_NAME='" + FILE_NAME + '\'' +

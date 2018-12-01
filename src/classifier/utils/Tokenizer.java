@@ -1,3 +1,8 @@
+package classifier.utils;
+
+import classifier.messagetypes.Message;
+import classifier.messagetypes.TokenizedMessage;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,9 +26,9 @@ public class Tokenizer {
 
     /**
      * Alternate method signature to allow disabling duplicate token removal.
-     * @param message Message object to tokenize
+     * @param message classifier.messagetypes.Message object to tokenize
      * @param removeDuplicates remove duplicates if true
-     * @return a TokenizedMessage
+     * @return a classifier.messagetypes.TokenizedMessage
      */
     public static TokenizedMessage tokenize(Message message, boolean removeDuplicates) {
         removeDups = removeDuplicates;
@@ -31,7 +36,7 @@ public class Tokenizer {
     }
 
     /**
-     * Tokenizes messages of type Message
+     * Tokenizes messages of type classifier.messagetypes.Message
      * @param message message to tokenize
      * @return the tokenized message
      */
@@ -45,15 +50,15 @@ public class Tokenizer {
         List<String> bodyTokens = new ArrayList<>();
         if (removeDups) {
             // Tokenize remove duplicate tokens.
-            subjectTokens = new ArrayList<>(new HashSet<>(Arrays.asList(message.subject.split("\\s+"))));
-            for (String line : message.body) {
+            subjectTokens = new ArrayList<>(new HashSet<>(Arrays.asList(message.getSubject().split("\\s+"))));
+            for (String line : message.getBody()) {
                 List<String> lineTokens = new ArrayList<>(new HashSet<>(Arrays.asList(line.split("\\s+"))));
                 bodyTokens.addAll(lineTokens);
             }
         } else {
             // Tokenize but don't remove duplicate tokens.
-            subjectTokens = Arrays.asList(message.subject.split("\\s+"));
-            for (String line : message.body) {
+            subjectTokens = Arrays.asList(message.getSubject().split("\\s+"));
+            for (String line : message.getBody()) {
                 List<String> lineTokens = Arrays.asList(line.split("\\s+"));
                 bodyTokens.addAll(lineTokens);
             }
