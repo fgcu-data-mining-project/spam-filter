@@ -144,43 +144,35 @@ public class Classify implements Runnable {
             // TODO Move all the reporting into the classifier.classifiers.core.ClassifierKNN class where it belongs.
 
             int totalNum = 0;
-            int numPredictedTrue = 0;
             int numActualTrue = 0;
-            int numPredictedFalse = 0;
             int numActualFalse = 0;
-            int totalCorrect = 0;
-            int totalIncorrect = 0;
             int numTP = 0;
             int numTN = 0;
             int numFP = 0;
             int numFN = 0;
-
             double nullErrorRate = 0;
-            for (TokenizedMessage testMessage : wrangledTestMessages) {
+
+            System.out.println("============================================");
+            for (TokenizedMessage tkTestkMsg : wrangledTestMessages) {
                 // Predict label of test message.
-                boolean label = knn.predict(testMessage);
+                boolean label = knn.predict(tkTestkMsg);
 
                 // Count total number of messages classified.
                 totalNum++;
 
-                // Count numbers of predictions.
-                if (label) {
-                    numPredictedTrue++;
-                } else {
-                    numPredictedFalse++;
-                }
-
                 // Count actual labels.
-                if (testMessage.isSpam()) {
+                if (tkTestkMsg.isSpam()) {
                     numActualTrue++;
                 } else {
                     numActualFalse++;
                 }
 
+                String isCorrect = null;
+
                 // Count correct/incorrect predictions,
                 // and catch TP, TN, FP, FN while at it.
-                if (label == testMessage.isSpam()) {
-                    totalCorrect++;
+                if (label == tkTestkMsg.isSpam()) {
+                    isCorrect = "correct";
 
                     if (label) {
                         numTP++;
@@ -188,7 +180,7 @@ public class Classify implements Runnable {
                         numTN++;
                     }
                 } else {
-                    totalIncorrect++;
+                    isCorrect = "INCORRECT";
 
                     if (label) {
                         numFP++;
@@ -196,19 +188,23 @@ public class Classify implements Runnable {
                         numFN++;
                     }
                 }
+
+                // Print stats.
+                System.out.print(String.format("| %-16s | %8s | %10s |\n", tkTestkMsg.getFILE_NAME(), label, isCorrect));
             }
+            System.out.println("============================================\n");
 
             // Calculate null error rate.
             String majClass = null;
             if (numActualTrue > numActualFalse) {
                 // spam = true is the majority class.
                 majClass = "true";
-                nullErrorRate = numActualFalse / (double) totalNum;
+                nullErrorRate = numActualTrue / (double) totalNum;
 
             } else {
                 // spam = false is the majority class.
                 majClass = "false";
-                nullErrorRate = numActualTrue / (double) totalNum;
+                nullErrorRate = numActualFalse / (double) totalNum;
             }
 
             //-------------------------------------+
@@ -219,9 +215,12 @@ public class Classify implements Runnable {
             System.out.println("CONFUSION MATRIX");
             System.out.println("================");
             System.out.println();
-            System.out.println(String.format("%-8s   %8s   %8s", "", "Spam", "Not Spam"));
-            System.out.println(String.format("%-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
-            System.out.println(String.format("%-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+            System.out.println(String.format("  %-8s   %8s   %8s", "", "Spam", "Not Spam"));
+            System.out.println("==================================");
+            System.out.println(String.format("| %-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
+            System.out.println("+================================+");
+            System.out.println(String.format("| %-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+            System.out.println("==================================");
 
             System.out.println();
 
@@ -229,13 +228,13 @@ public class Classify implements Runnable {
             System.out.println("==========");
             System.out.println();
             System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
-            System.out.println(String.format("%-25s %d", "Correct Predictions: ", totalCorrect));
-            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", totalIncorrect));
-            System.out.println(String.format("%-25s %f", "Accuracy: ", (totalCorrect/ (double) totalNum)));
-            System.out.println(String.format("%-25s %f", "Misclassification: ", totalIncorrect / (double) totalNum));
-            System.out.println(String.format("%-25s %f", "Precision: ", numActualTrue / (double) numPredictedTrue));
+            System.out.println(String.format("%-25s %d", "Correct Predictions: ", (numTP + numTN)));
+            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", (numFP + numFN)));
+            System.out.println(String.format("%-25s %f", "Accuracy: ", ((numTP + numTN) / (double) totalNum)));
+            System.out.println(String.format("%-25s %f", "Misclassification: ", (numFP + numFN) / (double) totalNum));
+            System.out.println(String.format("%-25s %f", "Precision: ", numTP / (double) (numTP + numFP)));
             System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
-            System.out.println(String.format("%-25s %f", "Null Error Rate (" + majClass + "): ", nullErrorRate));
+            System.out.println(String.format("%-25s %f", "Null Error Rate (Majority " + majClass + "): ", nullErrorRate));
 
         }
 
@@ -244,61 +243,25 @@ public class Classify implements Runnable {
             // Create the auto-trained instance of the categorizer.
             ClassifierDocumentCategorizer dc = new ClassifierDocumentCategorizer(wrangledTrainMessages);
 
-            // classifier.Classify test messages.
+            // Classify test messages.
             // Counts.
             int totalNum = 0;
-            int numPredictedTrue = 0;
-            int numPredictedFalse = 0;
             int numActualTrue = 0;
             int numActualFalse = 0;
-            int totalCorrect = 0;
-            int totalIncorrect = 0;
             int numTP = 0;
             int numTN = 0;
             int numFP = 0;
             int numFN = 0;
+            double nullErrorRate = 0;
 
-            // classifier.Classify test messages.
+            // Classify test messages.
+            System.out.println("============================================");
             for (TokenizedMessage tkTestkMsg : wrangledTestMessages) {
-
-                //     List<String> body = msg.getBody();
-                //     String[] bodyText = { body.get(0) };
-                //     System.out.println(bodyText[0]);
-
-                //     String bodyText = null;
-                //     for (String line : msg.getBody()) {
-                //         bodyText += line;
-                //         //System.out.println(line);
-                //     }
-
-                // classifier.Classify message by passing tokens in as array.
-                //double[] outcomes = dc.predict(tkTestkMsg);
-
-                // Store outcome data.
-                //Map<String, Double> categoryOutcomes = new HashMap<>();
-                //for (int i = 0; i < categorizer.getNumberOfCategories(); i++) {
-                //    categoryOutcomes.put(categorizer.getCategory(i), outcomes[i]);
-                //}
-
-                // Determine predicted category.
-                //boolean label = false;
-                //if (categoryOutcomes.get("spam") > categoryOutcomes.get("ham")) {
-                //    label = true;
-                //} else {
-                //    label = false;
-                //}
 
                 boolean label = dc.predict(tkTestkMsg);
 
                 // Count total number of messages classified.
                 totalNum++;
-
-                // Count numbers of predictions.
-                if (label) {
-                    numPredictedTrue++;
-                } else {
-                    numPredictedFalse++;
-                }
 
                 // Count actual labels.
                 if (tkTestkMsg.isSpam()) {
@@ -307,10 +270,12 @@ public class Classify implements Runnable {
                     numActualFalse++;
                 }
 
+                String isCorrect = null;
+
                 // Count correct/incorrect predictions,
                 // and catch TP, TN, FP, FN while at it.
                 if (label == tkTestkMsg.isSpam()) {
-                    totalCorrect++;
+                    isCorrect = "correct";
 
                     if (label) {
                         numTP++;
@@ -318,7 +283,7 @@ public class Classify implements Runnable {
                         numTN++;
                     }
                 } else {
-                    totalIncorrect++;
+                    isCorrect = "INCORRECT";
 
                     if (label) {
                         numFP++;
@@ -328,24 +293,39 @@ public class Classify implements Runnable {
                 }
 
                 // Print stats.
-                System.out.println(tkTestkMsg.getFILE_NAME() + " -> " + label);
-                if (label == tkTestkMsg.isSpam()) {
-                    System.out.println("correct");
-                } else {
-                    System.out.println("INCORRECT");
-                }
+                System.out.print(String.format("| %-16s | %8s | %10s |\n", tkTestkMsg.getFILE_NAME(), label, isCorrect));
                 //System.out.println(categoryOutcomes);
-
-                System.out.println();
             }
+
+            // Calculate null error rate.
+            String majClass = null;
+            if (numActualTrue > numActualFalse) {
+                // spam = true is the majority class.
+                majClass = "true";
+                nullErrorRate = numActualTrue / (double) totalNum;
+
+            } else {
+                // spam = false is the majority class.
+                majClass = "false";
+                nullErrorRate = numActualFalse / (double) totalNum;
+            }
+
+            //-------------------------------------+
+            //    PRODUCE REPORT OF THE THINGS    /
+            //-----------------------------------+
+
+            System.out.println("============================================\n");
 
             // Print confusion matrix.
             System.out.println("CONFUSION MATRIX");
             System.out.println("================");
             System.out.println();
-            System.out.println(String.format("%-8s   %8s   %8s", "", "Spam", "Not Spam"));
-            System.out.println(String.format("%-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
-            System.out.println(String.format("%-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+            System.out.println(String.format("  %-8s   %8s   %8s", "", "Spam", "Not Spam"));
+            System.out.println("==================================");
+            System.out.println(String.format("| %-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
+            System.out.println("+================================+");
+            System.out.println(String.format("| %-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
+            System.out.println("==================================");
 
             System.out.println();
 
@@ -353,12 +333,13 @@ public class Classify implements Runnable {
             System.out.println("==========");
             System.out.println();
             System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
-            System.out.println(String.format("%-25s %d", "Correct Predictions: ", totalCorrect));
-            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", totalIncorrect));
-            System.out.println(String.format("%-25s %f", "Accuracy: ", (totalCorrect/ (double) totalNum)));
-            System.out.println(String.format("%-25s %f", "Misclassification: ", totalIncorrect / (double) totalNum));
-            System.out.println(String.format("%-25s %f", "Precision: ", numTP/ (double) (numTP + numFP))); // TP/(TP+FP)
+            System.out.println(String.format("%-25s %d", "Correct Predictions: ", (numTP + numTN)));
+            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", (numFP + numFN)));
+            System.out.println(String.format("%-25s %f", "Accuracy: ", ((numTP + numTN) / (double) totalNum)));
+            System.out.println(String.format("%-25s %f", "Misclassification: ", (numFP + numFN) / (double) totalNum));
+            System.out.println(String.format("%-25s %f", "Precision: ", numTP/ (double) (numTP + numFP)));
             System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
+            System.out.println(String.format("%-25s %f", "Null Error Rate (Majority " + majClass + "): ", nullErrorRate));
         }
 
         // TODO Refactor all of this away to appropriate places.
