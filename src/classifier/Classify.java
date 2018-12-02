@@ -152,9 +152,9 @@ public class Classify implements Runnable {
         // TODO Refactor all of this away to appropriate places.
         if (algorithm.toLowerCase().equals("nb")) {
             NaiveBayes nb = new NaiveBayes();
-            nb.train(wrangledTrainMessages);
 
-//        int spamCount = tokenizedMessages.stream().filter(t ->  t.FILE_NAME.startsWith("s")).mapToInt(t -> 1).sum();
+            wrangledTrainMessages.forEach(nb::train);
+            wrangledTestMessages.forEach(nb::test);
         }
     }
 
