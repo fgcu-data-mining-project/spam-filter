@@ -7,7 +7,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import classifier.classifiers.core.KNN;
-import classifier.classifiers.experimental.ClassifierDocumentCategorizer;
+import classifier.classifiers.experimental.DocumentCategorizer;
 import classifier.messagetypes.Message;
 import classifier.messagetypes.TokenizedMessage;
 import classifier.utils.Tokenizer;
@@ -241,7 +241,7 @@ public class Classify implements Runnable {
         // TODO Refactor all of this away to appropriate places.
         if (algorithm.toLowerCase().equals("dc")) {
             // Create the auto-trained instance of the categorizer.
-            ClassifierDocumentCategorizer dc = new ClassifierDocumentCategorizer(wrangledTrainMessages);
+            DocumentCategorizer dc = new DocumentCategorizer(wrangledTrainMessages);
 
             // Classify test messages.
             // Counts.

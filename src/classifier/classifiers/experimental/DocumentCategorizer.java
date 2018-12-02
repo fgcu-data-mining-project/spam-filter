@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * An integration of Apache OpenNLP's Document Categorizer.
  */
-public class ClassifierDocumentCategorizer implements GenericClassifier {
+public class DocumentCategorizer implements GenericClassifier {
 
     /**
      * Path to store temporary data, like generated models.
@@ -38,7 +38,7 @@ public class ClassifierDocumentCategorizer implements GenericClassifier {
      * Trains model with passed-in set of tokenized messages upon instantiation.
      * @param tkMessages tokenized messages
      */
-    public ClassifierDocumentCategorizer(List<TokenizedMessage> tkMessages) {
+    public DocumentCategorizer(List<TokenizedMessage> tkMessages) {
         // Set up temporary directory for storing model.
         try {
             this.tempDir = Files.createTempDirectory("OpenNLPDocCat");
