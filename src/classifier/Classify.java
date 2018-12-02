@@ -135,114 +135,18 @@ public class Classify implements Runnable {
 
         // KNN
         if (algorithm.toLowerCase().equals("knn")) {
-            // Create instance of KNN classifier which auto-trains on passed-in data,
-            // and classify all the things.
+            // Create auto-trained instance of the KNN classifer, then
+            // classify all the things.
             KNN knn = new KNN(wrangledTrainMessages, kforKNN);
             knn.predictDataSet(wrangledTestMessages);
         }
 
-        // TODO Refactor all of this away to appropriate places.
+        // Apache OpenNLP Document Categorizer.
         if (algorithm.toLowerCase().equals("dc")) {
-            // Create the auto-trained instance of the categorizer.
+            // Create the auto-trained instance of the categorizer, then
+            // classify all the things.
             DocumentCategorizer dc = new DocumentCategorizer(wrangledTrainMessages);
-
-            // Classify test messages.
-            // Counts.
-            int totalNum = 0;
-            int numActualTrue = 0;
-            int numActualFalse = 0;
-            int numTP = 0;
-            int numTN = 0;
-            int numFP = 0;
-            int numFN = 0;
-            double nullErrorRate = 0;
-
-            // Classify test messages.
-            System.out.println("============================================");
-            for (TokenizedMessage tkTestkMsg : wrangledTestMessages) {
-
-                boolean label = dc.predict(tkTestkMsg);
-
-                // Count total number of messages classified.
-                totalNum++;
-
-                // Count actual labels.
-                if (tkTestkMsg.isSpam()) {
-                    numActualTrue++;
-                } else {
-                    numActualFalse++;
-                }
-
-                String isCorrect = null;
-
-                // Count correct/incorrect predictions,
-                // and catch TP, TN, FP, FN while at it.
-                if (label == tkTestkMsg.isSpam()) {
-                    isCorrect = "correct";
-
-                    if (label) {
-                        numTP++;
-                    } else {
-                        numTN++;
-                    }
-                } else {
-                    isCorrect = "INCORRECT";
-
-                    if (label) {
-                        numFP++;
-                    } else {
-                        numFN++;
-                    }
-                }
-
-                // Print stats.
-                System.out.print(String.format("| %-16s | %8s | %10s |\n", tkTestkMsg.getFILE_NAME(), label, isCorrect));
-                //System.out.println(categoryOutcomes);
-            }
-
-            // Calculate null error rate.
-            String majClass = null;
-            if (numActualTrue > numActualFalse) {
-                // spam = true is the majority class.
-                majClass = "true";
-                nullErrorRate = numActualTrue / (double) totalNum;
-
-            } else {
-                // spam = false is the majority class.
-                majClass = "false";
-                nullErrorRate = numActualFalse / (double) totalNum;
-            }
-
-            //-------------------------------------+
-            //    PRODUCE REPORT OF THE THINGS    /
-            //-----------------------------------+
-
-            System.out.println("============================================\n");
-
-            // Print confusion matrix.
-            System.out.println("CONFUSION MATRIX");
-            System.out.println("================");
-            System.out.println();
-            System.out.println(String.format("  %-8s   %8s   %8s", "", "Spam", "Not Spam"));
-            System.out.println("==================================");
-            System.out.println(String.format("| %-8s | %8s | %8s |" , "Spam", "TP " + numTP, "FP " + numFP));
-            System.out.println("+================================+");
-            System.out.println(String.format("| %-8s | %8s | %8s |" , "Not Spam", "FN " + numFN, "TN " + numTN));
-            System.out.println("==================================");
-
-            System.out.println();
-
-            System.out.println("STATISTICS");
-            System.out.println("==========");
-            System.out.println();
-            System.out.println(String.format("%-25s %d", "Messages Classified: ", totalNum));
-            System.out.println(String.format("%-25s %d", "Correct Predictions: ", (numTP + numTN)));
-            System.out.println(String.format("%-25s %d", "Incorrect Predictions: ", (numFP + numFN)));
-            System.out.println(String.format("%-25s %f", "Accuracy: ", ((numTP + numTN) / (double) totalNum)));
-            System.out.println(String.format("%-25s %f", "Misclassification: ", (numFP + numFN) / (double) totalNum));
-            System.out.println(String.format("%-25s %f", "Precision: ", numTP/ (double) (numTP + numFP)));
-            System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
-            System.out.println(String.format("%-25s %f", "Null Error Rate (Majority " + majClass + "): ", nullErrorRate));
+            dc.predictDataSet(wrangledTestMessages);
         }
 
         // TODO Refactor all of this away to appropriate places.
@@ -440,13 +344,5 @@ public class Classify implements Runnable {
         }
 
         return messages;
-    }
-
-
-    private void classifyMessages(List<TokenizedMessage> tkTrainMessages,
-                                  List<TokenizedMessage> tkTestMessages) {
-
-
-
     }
 }
