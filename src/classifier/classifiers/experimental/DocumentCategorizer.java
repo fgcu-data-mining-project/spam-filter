@@ -16,7 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO Create a Classifier interface or base class?
+
+// TODO Create a Classifier base class?
 
 /**
  * An integration of Apache OpenNLP's Document Categorizer.
@@ -28,6 +29,15 @@ public class DocumentCategorizer implements GenericClassifier {
      */
     private Path tempDir;
 
+    /**
+     * Map of statistics of training data.
+     */
+    private Map<String,Object> trainStats;
+
+    /**
+     * Map of statistics of test data.
+     */
+    private Map<String,Object> testStats;
 
     //---------------------+
     //    CONSTRUCTORS    /
@@ -36,9 +46,48 @@ public class DocumentCategorizer implements GenericClassifier {
     /**
      * Constructor.
      * Trains model with passed-in set of tokenized messages upon instantiation.
-     * @param tkMessages tokenized messages
+     * @param trainData tokenized messages
      */
-    public DocumentCategorizer(List<TokenizedMessage> tkMessages) {
+    public DocumentCategorizer(List<TokenizedMessage> trainData) {
+        // Create the maps to store stats.
+        testStats = new HashMap<>();
+        trainStats = new HashMap<>();
+
+        // TODO Make data set class to wrap list of messages and auto-calculate some stats?
+
+        // Calculate initial statistics on training data.
+        // Counts.
+        // Total number of train messages.
+        trainStats.put("numTotal", trainData.size());
+
+        // Number of actual true.
+        int numActualTrue = 0;
+        for (TokenizedMessage tkMessage : trainData) {
+            if (tkMessage.isSpam()) { numActualTrue++; }
+        }
+        trainStats.put("numActualTrue", numActualTrue);
+
+        // Number of actual false.
+        int numActualFalse = trainData.size() - numActualTrue;
+        trainStats.put("numActualFalse", numActualFalse);
+
+        // Null error rate.
+        String majClass = null;
+        double nullErrorRate = 0.0;
+        if (numActualTrue > numActualFalse) {
+            // spam = true is the majority class.
+            majClass = "true";
+            nullErrorRate = numActualTrue / (double) trainData.size();
+        } else {
+            // spam = false is the majority class.
+            majClass = "false";
+            nullErrorRate = numActualFalse / (double) trainData.size();
+        }
+        trainStats.put("majorityClass", majClass);
+        trainStats.put("nullErrorRate", nullErrorRate);
+
+        printTrainStats();
+
         // Set up temporary directory for storing model.
         try {
             this.tempDir = Files.createTempDirectory("OpenNLPDocCat");
@@ -48,7 +97,7 @@ public class DocumentCategorizer implements GenericClassifier {
         }
 
         // Reformat messages to proper training data file format.
-        File trainingFile = generateTrainingFile(tkMessages);
+        File trainingFile = generateTrainingFile(trainData);
 
         // Train the model with passed-in training data.
         train(trainingFile);
@@ -71,7 +120,7 @@ public class DocumentCategorizer implements GenericClassifier {
         List<String> allTokens = tkMessage.getAllTokens();
         String[] allTokensArr = allTokens.toArray(new String[0]);
 
-        // Get the model created by the generateTrainingFile(List<classifier.messagetypes.TokenizedMessage>) method.
+        // Get the model created by the train(File) method.
         InputStream modelIn = null;
         try {
             modelIn = new FileInputStream(new File(tempDir + "/en-email.model"));
@@ -107,6 +156,11 @@ public class DocumentCategorizer implements GenericClassifier {
         return (categoryOutcomes.get("spam") > categoryOutcomes.get("ham"));
     }
 
+    /**
+     * Predict class of each message in a list of messages,
+     * print report. TODO printing should be moved out of this method.
+     * @param tkMessages list of tokenized messages
+     */
     public void predictDataSet(List<TokenizedMessage> tkMessages) {
 
         // TODO Implement.
@@ -119,7 +173,7 @@ public class DocumentCategorizer implements GenericClassifier {
         int numTN = 0;
         int numFP = 0;
         int numFN = 0;
-        double nullErrorRate = 0;
+        double nullErrorRate;
 
         // Classify test messages.
         System.out.println("============================================");
@@ -170,7 +224,6 @@ public class DocumentCategorizer implements GenericClassifier {
             // spam = true is the majority class.
             majClass = "true";
             nullErrorRate = numActualTrue / (double) totalNum;
-
         } else {
             // spam = false is the majority class.
             majClass = "false";
@@ -300,5 +353,15 @@ public class DocumentCategorizer implements GenericClassifier {
         }
 
         return trainingFile;
+    }
+
+    /**
+     * Print train data set statistics.
+     */
+    private void printTrainStats() {
+        // TODO Format output.
+        for (String key : trainStats.keySet()) {
+            System.out.println(key + ": " + trainStats.get(key));
+        }
     }
 }

@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+// TODO Create a Classifier base class?
+
 /**
  * KNN classification of plain text messages.
  * TODO Create a Classifier interface or base class?
@@ -125,7 +127,7 @@ public class KNN implements GenericClassifier {
         int numTN = 0;
         int numFP = 0;
         int numFN = 0;
-        double nullErrorRate = 0;
+        double nullErrorRate;
 
         System.out.println("============================================");
         for (TokenizedMessage tkTestkMsg : tkMessages) {
@@ -175,7 +177,6 @@ public class KNN implements GenericClassifier {
             // spam = true is the majority class.
             majClass = "true";
             nullErrorRate = numActualTrue / (double) totalNum;
-
         } else {
             // spam = false is the majority class.
             majClass = "false";
@@ -218,7 +219,7 @@ public class KNN implements GenericClassifier {
     //----------------------+
 
     /**
-     * Calculate (cosine angle) similarity between tokenized messages.
+     * Calculate (cosine angle) similarity between unweighted tokenized messages.
      * TODO Make public and static?
      * TODO Add term weighting?
      * @param tkMessage1 tokenized message
