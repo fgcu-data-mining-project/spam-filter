@@ -9,7 +9,7 @@ Usage
 The general usage of the commandline application is:
 
 ```
-Usage: classifier.Classify [-hV] [-v]... [--testPath=<testDataPath>]
+Usage: Classify [-hsV] [-v]... [--testPath=<testDataPath>]
                 [--trainPath=<trainDataPath>] [-a=<algorithm>] [-k=<kforKNN>]
                 PATH
       PATH            A single path to a directory containing training and testing
@@ -19,9 +19,10 @@ Usage: classifier.Classify [-hV] [-v]... [--testPath=<testDataPath>]
       --trainPath=<trainDataPath>
                       Path within data folder to training data.
   -a, --algorithm=<algorithm>
-                      KNN, NB, TODO...
+                      KNN, NB, DC
   -h, --help          Show this help message and exit.
   -k, --k=<kforKNN>   Number of nearest neighbors - the K in KNN.
+  -s, --stopwords     Remove stopwords from messages during tokens wrangling.
   -v, --verbose       Verbose mode. Multiple -v options increase the verbosity.
   -V, --version       Print version information and exit.
 ```
@@ -51,7 +52,7 @@ data
     └── spmsgb99.txt
 ```
 
-Otherwise, the `--trainPath` and `testPath` options can be used to specify different locations within the data directory.
+Otherwise, the `--trainPath` and `--testPath` options can be used to specify different locations within the data directory.
 
 ### Label Inference
 
@@ -67,19 +68,19 @@ Two core classification algorithms are provided: K-Nearest Neighbors (KNN) and N
 To classify messages using KNN with default K of 3:
 
 ```
-java classifier.Classify -a knn ./data
+java -jar classifier.jar -a knn ./data
 ```
 
 To classify messages using KNN with K of 5:
 
 ```
-java classifier.Classify -a knn -k 5 ./data
+java -jar classifier.jar -a knn -k 5 ./data
 ```
 
 To classify messages using Naive Bayes:
 
 ```
-java classifier.Classify -a nb ~/some/place/with/data
+java -jar classifier.jar -a nb ~/some/place/with/data
 ```
 
 ### Experimental Algorithms
@@ -94,5 +95,5 @@ The open source [Apache OpenNLP library](https://opennlp.apache.org/) provides a
 
 To classify messages using the Apache OpenNLP Document Categorizer:
 ```
-java classifier.Classify -a dc ~/some/place/with/data
+java -jar classifier.jar -a dc ~/some/place/with/data
 ```
