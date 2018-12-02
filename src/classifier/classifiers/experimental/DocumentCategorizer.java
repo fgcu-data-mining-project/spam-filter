@@ -107,6 +107,12 @@ public class DocumentCategorizer implements GenericClassifier {
         return (categoryOutcomes.get("spam") > categoryOutcomes.get("ham"));
     }
 
+    public void predictDataSet(List<TokenizedMessage> tkMessages) {
+
+        // TODO Implement.
+
+    }
+
 
     //------------------------+
     //    PRIVATE METHODS    /
