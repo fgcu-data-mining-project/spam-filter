@@ -1,5 +1,6 @@
 package classifier.classifiers.core;
 
+import classifier.classifiers.interfaces.GenericClassifier;
 import classifier.messagetypes.TokenizedMessage;
 
 import java.util.*;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
  * KNN classification of plain text messages.
  * TODO Create a Classifier interface or base class?
  */
-public class ClassifierKNN {
+public class KNN implements GenericClassifier {
 
     /**
      * The k for KNN.
@@ -35,7 +36,7 @@ public class ClassifierKNN {
      * @param tokenizedMessages a classifier.messagetypes.TokenizedMessage
      * @param k k for knn
      */
-    public ClassifierKNN(List<TokenizedMessage> tokenizedMessages, int k) {
+    public KNN(List<TokenizedMessage> tokenizedMessages, int k) {
 
         // Set the k.
         this.kforKNN = k;
@@ -52,11 +53,11 @@ public class ClassifierKNN {
 
     /**
      * Predict label for a message based on training data
-     * passed in during instantiation of classifier.classifiers.core.ClassifierKNN.
+     * passed in during instantiation of classifier.classifiers.core.KNN.
      * @param tkTestMessage a classifier.messagetypes.TokenizedMessage
      * @return the label - true if spam
      */
-    public Boolean predict(TokenizedMessage tkTestMessage) {
+    public boolean predict(TokenizedMessage tkTestMessage) {
 
         // Map for storing similarities.
         Map<String, Double> similarities = new HashMap<>();

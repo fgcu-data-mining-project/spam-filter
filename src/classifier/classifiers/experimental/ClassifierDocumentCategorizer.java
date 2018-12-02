@@ -1,5 +1,6 @@
 package classifier.classifiers.experimental;
 
+import classifier.classifiers.interfaces.GenericClassifier;
 import classifier.messagetypes.TokenizedMessage;
 import opennlp.tools.doccat.*;
 import opennlp.tools.util.MarkableFileInputStreamFactory;
@@ -20,7 +21,7 @@ import java.util.Map;
 /**
  * An integration of Apache OpenNLP's Document Categorizer.
  */
-public class ClassifierDocumentCategorizer {
+public class ClassifierDocumentCategorizer implements GenericClassifier {
 
     /**
      * Path to store temporary data, like generated models.
