@@ -149,13 +149,12 @@ public class Classify implements Runnable {
             dc.predictDataSet(wrangledTestMessages);
         }
 
-        // TODO Refactor all of this away to appropriate places.
+        // Naive Bayes
         if (algorithm.toLowerCase().equals("nb")) {
             NaiveBayes nb = new NaiveBayes();
 
             nb.train(wrangledTrainMessages);
-
-            wrangledTestMessages.forEach(nb::test);
+            nb.test(wrangledTestMessages);
         }
     }
 

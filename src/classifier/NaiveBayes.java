@@ -3,6 +3,7 @@ package classifier;
 import classifier.messagetypes.TokenizedMessage;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class NaiveBayes {
 
@@ -19,8 +20,9 @@ public class NaiveBayes {
   // level 0 - no tagging
   // level 2 - append labels to tokens
   private int tagging = 0;
-  private final String MODEL_SAVE_DIR = "./NB_models";
-  private Double alpha = 0.0; // see laplace smoothing (or additive smoothing)
+  private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
+  private Double alpha = 0.00001; // see laplace smoothing (or additive smoothing)
+  private Double alphaD = 0.00001; // see laplace smoothing (or additive smoothing)
 
   private class Token <T> implements Comparable<Token<T>>{
     T token; // token symbol
@@ -31,7 +33,7 @@ public class NaiveBayes {
     HashMap<String, Integer> count; // <label, frequency_count>
     HashMap<String, Double> probability; // <descriptive_id, calculated_probability>
 
-    public Token(T token) {
+    Token(T token) {
       this.token = token;
       this.activeLabel = "spam"; // TODO: I don't think I need this for every object. A model-level(or class) variable might suffice.
       this.total = 0; // sum of all label counts: total count in the model
@@ -107,8 +109,6 @@ public class NaiveBayes {
 
   /***
    * Disabling this for now. TODO: fix model saving and loading
-   * @param token
-   * @param label
    * /  /*
  void loadModel (String modelName) {
     // try to load the saved maps
@@ -166,7 +166,7 @@ public class NaiveBayes {
   }
 
   // Processes the tokens in a message and updates the proper tables for future use.
-  void processMessage(TokenizedMessage message) {
+  private void processMessage(TokenizedMessage message) {
     // I'm cheating here...
     String label = (message.isSpam())? "spam" : "ham";
 
@@ -200,17 +200,17 @@ public class NaiveBayes {
     objectCounts.put("totalTokens", objectCounts.get("totalTokens") +1);
   }
 
-  // use the default smoothing level (no smoothing)
-  void calculatePriors(){
+  // use the default smoothing level
+  private void calculatePriors(){
     calculatePriors(this.alpha);
   }
 
   // update learned probabilities
-  void calculatePriors(Double alpha){
+  private void calculatePriors(Double alpha){
     Integer totalObjects = objectCounts.get("totalObjects");
 
     // factor that smooths probability distribution
-    Double alphaD = alpha * objectCounts.get("totalTokens");
+    alphaD = alpha * objectCounts.get("totalTokens");
 
     pLabel.keySet().forEach(label->pLabel
         .put(label, 1.0 * objectCounts.get(label) / totalObjects)
@@ -218,38 +218,49 @@ public class NaiveBayes {
 
     for (Token<String> tk : tokens.values()){
       // update token probability for each label
-      tk.count.forEach((label,count)->{
-        tk.updateProbability("pTokenLabel",
-            (count + alpha)/ (objectCounts.get(label) + alphaD) );
-      });
+      tk.count.forEach((label,count)-> tk.updateProbability("pToken"+label,
+          (count + alpha)/ (objectCounts.get(label) + alphaD) ));
       // update probability of token in the model
       tk.updateProbability("pToken",1.0 * tk.getTotal()/totalObjects);
     }
   }
 
 
-  // Process a message and try to predict it's label based on the training data.
-  void test(TokenizedMessage message){
-    String label = (message.isSpam())? "spam" : "ham";
-    //Double prediction = predict(message.getAllTokens());
+  // Process test messages and try to predict their labels based on the training data.
+  void test(List<TokenizedMessage> messages){
+    for (TokenizedMessage msg : messages){
+      System.out.println(predict(msg.getAllTokens(),false).toString());
+    }
 
-    // DEBUG
-    //System.out.println(message.FILE_NAME+": "+prediction);
   }
 
 
-/*
-    // TODO refactor this to use the new Token class
-  Double predict(List<String> tks){
-    Double prediction = 0.0;
-    prediction = tks.parallelStream()
-        .map(this::getProbability)
-        .filter(Objects::isNull)
-        .peek(System.out::println)
-        .reduce(1.0, (x,y)-> x*y);
-    return prediction;
+  private Map<String, Double> predict(List<String> tks, Boolean verbose){
+    Map<String, Double> predictions = new HashMap<>(pLabel); //copies the keys(labels)
+
+    // factor that smooths probability distribution
+    alphaD = alpha * objectCounts.get("totalTokens");
+
+    for (String label : predictions.keySet()) {
+      predictions.put(label,
+          tks.parallelStream()
+          .map(tokens::get)
+          .peek(t->System.out.print(t.token + " -> "))
+          .map(t -> t.getProbabiltiy("pToken"+label))
+          .peek(System.out::println)
+          .reduce(1.0, (x,y)-> x*y)
+      );
+    }
+    // Sorted in desc order by value
+    return predictions.entrySet()
+        .stream()
+        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+        .collect(Collectors.toMap(
+            Map.Entry::getKey,
+            Map.Entry::getValue,
+            (oldValue, newValue) -> oldValue, LinkedHashMap::new
+        ));
   }
-*/
 
   //******************
   // Helper functions
