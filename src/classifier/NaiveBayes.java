@@ -2,20 +2,17 @@ package classifier;
 
 import classifier.messagetypes.TokenizedMessage;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class NaiveBayes {
 
   // Maps token symbols to token objects
-  private Map<String, Token> tokens;
+  private Map<String, Token<String>> tokens;
 
   // <some_counter_label, current_value>
   // counter_labels: 'spam', 'ham', 'totalObjects', 'totalTokens'
   private Map<String, Integer> objectCounts; // what a terrible name ;;
+  private Map<String, Double> pLabel; // p(label)= labelMessageCount / totalMessageCount
 
   /********* config settings ***********/
   // specify the level of metadata to add
@@ -23,7 +20,7 @@ public class NaiveBayes {
   // level 2 - append labels to tokens
   private int tagging = 0;
   private final String MODEL_SAVE_DIR = "./NB_models";
-  private String smoothing = "laplace";
+  private Double alpha = 0.0; // see laplace smoothing (or additive smoothing)
 
   private class Token <T> implements Comparable<Token<T>>{
     T token; // token symbol
@@ -102,6 +99,7 @@ public class NaiveBayes {
 
   private void reset(){
     tokens = new HashMap<>();
+    pLabel = new HashMap<>();
     objectCounts = new HashMap<>();
     objectCounts.put("totalObjects", 0);
     objectCounts.put("totalTokens", 0);
@@ -169,7 +167,11 @@ public class NaiveBayes {
 
   // Processes the tokens in a message and updates the proper tables for future use.
   void processMessage(TokenizedMessage message) {
+    // I'm cheating here...
     String label = (message.isSpam())? "spam" : "ham";
+
+    // add an entry in the pLabels table if needed
+    this.pLabel.putIfAbsent(label, 0.0);
 
     // increment message counters
     objectCounts.put(label, objectCounts.getOrDefault(label,0) +1);
@@ -193,20 +195,36 @@ public class NaiveBayes {
   // from newly predicted messages. But here we will only be learning training
   // messages.
   private void learn(String tk, String label){
-    if (!tokens.containsKey(tk)) tokens.put(tk, new Token(tk));
+    if (!tokens.containsKey(tk)) tokens.put(tk, new Token<>(tk));
     tokens.get(tk).increment(label);
     objectCounts.put("totalTokens", objectCounts.get("totalTokens") +1);
   }
 
+  // use the default smoothing level (no smoothing)
   void calculatePriors(){
-    // update probabilities
-    if (smoothing == "laplace"){
-      Double p = 1.0;
-      Integer totalObjects = objectCounts.get("totalObjects");
-      Integer totalTokens = objectCounts.get("totalTokens");
+    calculatePriors(this.alpha);
+  }
+
+  // update learned probabilities
+  void calculatePriors(Double alpha){
+    Integer totalObjects = objectCounts.get("totalObjects");
+
+    // factor that smooths probability distribution
+    Double alphaD = alpha * objectCounts.get("totalTokens");
+
+    pLabel.keySet().forEach(label->pLabel
+        .put(label, 1.0 * objectCounts.get(label) / totalObjects)
+    );
+
+    for (Token<String> tk : tokens.values()){
+      // update token probability for each label
+      tk.count.forEach((label,count)->{
+        tk.updateProbability("pTokenLabel",
+            (count + alpha)/ (objectCounts.get(label) + alphaD) );
+      });
+      // update probability of token in the model
+      tk.updateProbability("pToken",1.0 * tk.getTotal()/totalObjects);
     }
-    //Double pSpam = (tokens.get() == 0)? 0.0 : 1.0 * getSpamTkCount(tk)/getSpamMsgCount();
-    //Double tkProb = pSpam / (pSpam + pHam);
   }
 
 
