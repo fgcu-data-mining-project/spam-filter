@@ -161,9 +161,14 @@ public class NaiveBayes {
     }
   }*/
 
+  // Train the model with a List of messages
+  void train(List<TokenizedMessage> messages) {
+    messages.forEach(this::processMessage);
+    calculatePriors();
+  }
 
   // Processes the tokens in a message and updates the proper tables for future use.
-  void train(TokenizedMessage message) {
+  void processMessage(TokenizedMessage message) {
     String label = (message.isSpam())? "spam" : "ham";
 
     // increment message counters
@@ -182,7 +187,6 @@ public class NaiveBayes {
       tokenSet = new HashSet<>(message.getBodyTokens());
       tokenSet.forEach(t->learn("##body##" + t,label));
     }
-//    System.out.println("breakpoint");
   }
 
   // If this were to be used in a live environment it would need to learn

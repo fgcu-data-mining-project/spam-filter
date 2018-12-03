@@ -153,7 +153,8 @@ public class Classify implements Runnable {
         if (algorithm.toLowerCase().equals("nb")) {
             NaiveBayes nb = new NaiveBayes();
 
-            wrangledTrainMessages.forEach(nb::train);
+            nb.train(wrangledTrainMessages);
+
             wrangledTestMessages.forEach(nb::test);
         }
     }
