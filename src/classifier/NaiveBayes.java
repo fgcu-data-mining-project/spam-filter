@@ -18,8 +18,9 @@ public class NaiveBayes {
   /********* config settings ***********/
   // specify the level of metadata to add
   // level 0 - no tagging
+  // level 1 - use priors
   // level 2 - append labels to tokens
-  private int tagging = 0;
+  private int tagging = 1;
   private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
   private Double alpha = 0.00001; // see laplace smoothing (or additive smoothing)
   private Double alphaD = 0.00001; // see laplace smoothing (or additive smoothing)
@@ -81,6 +82,17 @@ public class NaiveBayes {
       return (int) (t.probability.getOrDefault(activeLabel,0.0)
                     - this.probability.getOrDefault(activeLabel,0.0));
     }
+  }
+
+  // False if tokens map doesn't have an entry for this key (tk).
+  Boolean tokenIsKnown(String tk){
+    return (tokens.get(tk) != null);
+  }
+
+  // False if not found in the token map OR token.count map doesn't have an
+  //   entry for this label.
+  Boolean tokenIsKnown(String tk, String label){
+    return (tokens.get(tk) != null && tokens.get(tk).getCount(label) != 0);
   }
 
   // default constructor. initializes to an untrained model
@@ -180,9 +192,9 @@ public class NaiveBayes {
     // Learn each distinct token, if tagging is >= 2 tokens are prepended with
     // (hopefully) unique strings for subject or body.
     // WANT: Is there a better way to tag tokens?
-    if(tagging == 0) {
+    if(tagging < 2) {
       message.getAllTokens().forEach(t->learn(t,label));
-    } else if(tagging >=2) {
+    } else if(tagging >= 2) {
       HashSet<String> tokenSet = new HashSet<>(message.getSubjectTokens());
       tokenSet.forEach(t->learn("##subject##" + t,label));
 
@@ -241,16 +253,22 @@ public class NaiveBayes {
     // factor that smooths probability distribution
     alphaD = alpha * objectCounts.get("totalTokens");
 
+    // calculate p(label|tokens) for all labels and store in preditions map
     for (String label : predictions.keySet()) {
       predictions.put(label,
-          tks.parallelStream()
-          .map(tokens::get)
-          .peek(t->System.out.print(t.token + " -> "))
-          .map(t -> t.getProbabiltiy("pToken"+label))
+          tks.stream()// need to change this back to parallelStream() when done testing
+          .peek(tk-> System.out.println("Is /" + tk + "/ known: "+ tokenIsKnown(tk)))
+          .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
+          .map(tk -> getpTokens(tk,label))
           .peek(System.out::println)
-          .reduce(1.0, (x,y)-> x*y)
+          .reduce(1.0, (accumulator,pTokensLabel)-> {
+            System.out.println("a: " + accumulator);
+            return accumulator * pTokensLabel;
+          })
+          * getpLabel(label)
       );
     }
+
     // Sorted in desc order by value
     return predictions.entrySet()
         .stream()
@@ -260,6 +278,25 @@ public class NaiveBayes {
             Map.Entry::getValue,
             (oldValue, newValue) -> oldValue, LinkedHashMap::new
         ));
+  }
+
+  Double getpTokens(String token, String label){
+    Token tk = tokens.get(token);
+/*  // Delete this after next commit
+    if (tk == null){
+      return 1.0; // unknown tokens don't count towards the prediction
+    }*/
+    return (tk.getProbabiltiy("pToken" + label)==0.0)
+          ? 1.0 : tk.getProbabiltiy("pToken" + label) / tk.getProbabiltiy("pToken");
+
+    // Delete this after next commit
+/*    return ( (tk.getCount(label) + alpha)
+        / (objectCounts.get(label) + alphaD) )
+        / (1.0 * tk.getTotal()/objectCounts.get("totalObjects"));*/
+  }
+
+  Double getpLabel(String label){
+    return pLabel.get(label);
   }
 
   //******************
