@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import classifier.classifiers.core.KNN;
+import classifier.classifiers.core.NaiveBayes;
 import classifier.classifiers.experimental.DocumentCategorizer;
 import classifier.messagetypes.Message;
 import classifier.messagetypes.TokenizedMessage;
@@ -153,6 +154,9 @@ public class Classify implements Runnable {
         if (algorithm.toLowerCase().equals("nb")) {
             NaiveBayes nb = new NaiveBayes();
 
+//            nb.train(wrangledTestMessages);
+//            nb.test(wrangledTrainMessages);
+//
             nb.train(wrangledTrainMessages);
             nb.test(wrangledTestMessages);
         }

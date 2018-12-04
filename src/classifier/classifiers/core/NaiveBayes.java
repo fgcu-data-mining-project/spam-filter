@@ -1,9 +1,8 @@
-package classifier;
+package classifier.classifiers.core;
 
 import classifier.messagetypes.TokenizedMessage;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class NaiveBayes {
 
@@ -96,7 +95,7 @@ public class NaiveBayes {
   }
 
   // default constructor. initializes to an untrained model
-  NaiveBayes() {
+  public NaiveBayes() {
     reset();
   }
 
@@ -172,7 +171,7 @@ public class NaiveBayes {
   }*/
 
   // Train the model with a List of messages
-  void train(List<TokenizedMessage> messages) {
+  public void train(List<TokenizedMessage> messages) {
     messages.forEach(this::processMessage);
     calculatePriors();
   }
@@ -240,7 +239,7 @@ public class NaiveBayes {
 
 
   // Process test messages and try to predict their labels based on the training data.
-  void test(List<TokenizedMessage> messages){
+  public void test(List<TokenizedMessage> messages){
     Map<TokenizedMessage, Map<String, Double>> predictions = new LinkedHashMap<>();
     Map<String, Integer> accuracy = new HashMap<>();
 
@@ -283,7 +282,6 @@ public class NaiveBayes {
 //          .peek(t-> System.out.printf("%-16s",">"+t+"<"))
           .map(tk -> getTokenLabelCount(tk,label) + alpha)
           .map(tk -> tk/(objectCounts.get("totalTokens"+label) + alphaD))
-//          .peek(System.out::println)
 //          .reduce(baseProb, (labelProb,tkProb)-> labelProb + Math.log(tkProb))
           .reduce(baseProb, (labelProb,tkProb)-> {
 //            System.out.printf("[a] %-2.22e - [p] %-2.22f\n",labelProb, tkProb);
