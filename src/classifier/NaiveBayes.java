@@ -22,8 +22,8 @@ public class NaiveBayes {
   // level 2 - append labels to tokens
   private int tagging = 1;
   private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
-  private Double alpha = 0.00001; // see laplace smoothing (or additive smoothing)
-  private Double alphaD = 0.00001; // see laplace smoothing (or additive smoothing)
+  private Double alpha = 1.0; // see laplace smoothing (or additive smoothing)
+  private Double alphaD = 1.0; // see laplace smoothing (or additive smoothing)
 
   private class Token <T> implements Comparable<Token<T>>{
     T token; // token symbol
@@ -85,13 +85,13 @@ public class NaiveBayes {
   }
 
   // False if tokens map doesn't have an entry for this key (tk).
-  Boolean tokenIsKnown(String tk){
+  private Boolean tokenIsKnown(String tk){
     return (tokens.get(tk) != null);
   }
 
   // False if not found in the token map OR token.count map doesn't have an
   //   entry for this label.
-  Boolean tokenIsKnown(String tk, String label){
+  private Boolean tokenIsKnown(String tk, String label){
     return (tokens.get(tk) != null && tokens.get(tk).getCount(label) != 0);
   }
 
@@ -240,10 +240,14 @@ public class NaiveBayes {
 
   // Process test messages and try to predict their labels based on the training data.
   void test(List<TokenizedMessage> messages){
-    for (TokenizedMessage msg : messages){
-      System.out.println(predict(msg.getAllTokens(),false).toString());
-    }
+    int test=14;
+    System.out.println(messages.get(test).getFILE_NAME()
+        +" is "+((messages.get(test).isSpam())?"spam":"ham")
+        +" "+predict(messages.get(test).getAllTokens(),false).toString());
 
+//    for (TokenizedMessage msg : messages){
+//      System.out.println(msg.getFILE_NAME()+" is "+((msg.isSpam())?"spam":"ham")+" "+predict(msg.getAllTokens(),false).toString());
+//    }
   }
 
 
@@ -256,43 +260,33 @@ public class NaiveBayes {
     // calculate p(label|tokens) for all labels and store in preditions map
     for (String label : predictions.keySet()) {
       predictions.put(label,
-          tks.stream()// need to change this back to parallelStream() when done testing
-          .peek(tk-> System.out.println("Is /" + tk + "/ known: "+ tokenIsKnown(tk)))
+          tks.stream() // need to change this back to parallelStream() when done testing
           .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
-          .map(tk -> getpTokens(tk,label))
-          .peek(System.out::println)
+              .peek(t-> System.out.printf("%-16s",">"+t+"<"))
+          .map(tk -> getpTokenLabel(tk,label))
+//              .peek(System.out::println)
           .reduce(1.0, (accumulator,pTokensLabel)-> {
-            System.out.println("a: " + accumulator);
+            System.out.printf("[a] %-2.22e - [p] %-2.22f\n",accumulator, pTokensLabel);
             return accumulator * pTokensLabel;
           })
-          * getpLabel(label)
+//          * getpLabel(label)
+          * (objectCounts.get(label) / objectCounts.get("totalObjects"))
       );
     }
 
     // Sorted in desc order by value
-    return predictions.entrySet()
+    return predictions/*.entrySet()
         .stream()
         .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
         .collect(Collectors.toMap(
             Map.Entry::getKey,
             Map.Entry::getValue,
             (oldValue, newValue) -> oldValue, LinkedHashMap::new
-        ));
+        ))*/;
   }
 
-  Double getpTokens(String token, String label){
-    Token tk = tokens.get(token);
-/*  // Delete this after next commit
-    if (tk == null){
-      return 1.0; // unknown tokens don't count towards the prediction
-    }*/
-    return (tk.getProbabiltiy("pToken" + label)==0.0)
-          ? 1.0 : tk.getProbabiltiy("pToken" + label) / tk.getProbabiltiy("pToken");
-
-    // Delete this after next commit
-/*    return ( (tk.getCount(label) + alpha)
-        / (objectCounts.get(label) + alphaD) )
-        / (1.0 * tk.getTotal()/objectCounts.get("totalObjects"));*/
+  Double getpTokenLabel(String token, String label){
+    return tokens.get(token).getProbabiltiy("pToken" + label);
   }
 
   Double getpLabel(String label){
