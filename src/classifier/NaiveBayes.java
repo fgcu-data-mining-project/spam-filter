@@ -11,16 +11,16 @@ public class NaiveBayes {
   private Map<String, Token<String>> tokens;
 
   // <some_counter_label, current_value>
-  // counter_labels: 'spam', 'ham', 'totalObjects', 'totalTokens'
+  // counter_labels: 'spam', 'ham', 'totalObjects', 'totalTokens',
+  //  'totalTokensspam', 'totalTokensham'
   private Map<String, Integer> objectCounts; // what a terrible name ;;
   private Map<String, Double> pLabel; // p(label)= labelMessageCount / totalMessageCount
 
   /********* config settings ***********/
   // specify the level of metadata to add
   // level 0 - no tagging
-  // level 1 - use priors
   // level 2 - append labels to tokens
-  private int tagging = 1;
+  private int tagging = 0;
   private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
   private Double alpha = 1.0; // see laplace smoothing (or additive smoothing)
   private Double alphaD = 1.0; // see laplace smoothing (or additive smoothing)
@@ -208,7 +208,9 @@ public class NaiveBayes {
   // messages.
   private void learn(String tk, String label){
     if (!tokens.containsKey(tk)) tokens.put(tk, new Token<>(tk));
+//    if (!objectCounts.containsKey("totalTokens"+label)) objectCounts.put("totalTokens"+label, 0); delete me
     tokens.get(tk).increment(label);
+    objectCounts.put("totalTokens"+label, objectCounts.getOrDefault("totalTokens"+label,0) +1);
     objectCounts.put("totalTokens", objectCounts.get("totalTokens") +1);
   }
 
@@ -240,14 +242,29 @@ public class NaiveBayes {
 
   // Process test messages and try to predict their labels based on the training data.
   void test(List<TokenizedMessage> messages){
-    int test=14;
-    System.out.println(messages.get(test).getFILE_NAME()
-        +" is "+((messages.get(test).isSpam())?"spam":"ham")
-        +" "+predict(messages.get(test).getAllTokens(),false).toString());
+//    int test=14;
+//    System.out.println(messages.get(test).getFILE_NAME()
+//        +" is "+((messages.get(test).isSpam())?"spam":"ham")
+//        +" "+predict(messages.get(test).getAllTokens(),false).toString());
+    Map<TokenizedMessage, Map<String, Double>> predictions = new LinkedHashMap<>();
+    Integer[] accurate = {0};
 
-//    for (TokenizedMessage msg : messages){
-//      System.out.println(msg.getFILE_NAME()+" is "+((msg.isSpam())?"spam":"ham")+" "+predict(msg.getAllTokens(),false).toString());
-//    }
+    messages.forEach(m->predictions.put(m,
+        predict(m.getAllTokens(),false)));
+
+    predictions.forEach((m,p) -> {
+      String label = (m.isSpam()) ? "spam" : "ham";
+      String nbPred = (p.get("spam") > p.get("ham"))? "spam" : "ham";
+      String evalation;
+      if (nbPred.equals(label)) {
+        evalation = "Correct";
+        accurate[0]++;
+      } else { evalation = "Wrong"; }
+      System.out.println(m.getFILE_NAME() + " is " + label
+          + ". NB says it is " + nbPred + " [" + evalation + "]");
+    });
+    System.out.printf("Model Accuracy: %3d / %-3d = %-2.1f %%", accurate[0], predictions.size(),
+        (accurate[0] * 100.0)/predictions.size());
   }
 
 
@@ -257,20 +274,23 @@ public class NaiveBayes {
     // factor that smooths probability distribution
     alphaD = alpha * objectCounts.get("totalTokens");
 
-    // calculate p(label|tokens) for all labels and store in preditions map
+    // calculate p(label|tokens) for all labels and store in predictions map
     for (String label : predictions.keySet()) {
+      Double baseProb =  Math.log(1.0 * objectCounts.get(label)/objectCounts.get("totalObjects"));
       predictions.put(label,
           tks.stream() // need to change this back to parallelStream() when done testing
           .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
-              .peek(t-> System.out.printf("%-16s",">"+t+"<"))
-          .map(tk -> getpTokenLabel(tk,label))
-//              .peek(System.out::println)
-          .reduce(1.0, (accumulator,pTokensLabel)-> {
-            System.out.printf("[a] %-2.22e - [p] %-2.22f\n",accumulator, pTokensLabel);
-            return accumulator * pTokensLabel;
+//          .peek(t-> System.out.printf("%-16s",">"+t+"<"))
+          .map(tk -> getTokenLabelCount(tk,label) + alpha)
+          .map(tk -> tk/(objectCounts.get("totalTokens"+label) + alphaD))
+//          .peek(System.out::println)
+//          .reduce(baseProb, (labelProb,tkProb)-> labelProb + Math.log(tkProb))
+          .reduce(baseProb, (labelProb,tkProb)-> {
+//            System.out.printf("[a] %-2.22e - [p] %-2.22f\n",labelProb, tkProb);
+            return labelProb + Math.log(tkProb);
           })
 //          * getpLabel(label)
-          * (objectCounts.get(label) / objectCounts.get("totalObjects"))
+          * -1.0// * (objectCounts.get(label) / objectCounts.get("totalObjects"))
       );
     }
 
@@ -283,6 +303,10 @@ public class NaiveBayes {
             Map.Entry::getValue,
             (oldValue, newValue) -> oldValue, LinkedHashMap::new
         ))*/;
+  }
+
+  Integer getTokenLabelCount(String token, String label){
+    return tokens.get(token).getCount(label);
   }
 
   Double getpTokenLabel(String token, String label){
