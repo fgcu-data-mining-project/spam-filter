@@ -176,11 +176,11 @@ public class KNN implements GenericClassifier {
         if (numActualTrue > numActualFalse) {
             // spam = true is the majority class.
             majClass = "true";
-            nullErrorRate = numActualTrue / (double) totalNum;
+            nullErrorRate = numActualFalse / (double) totalNum;
         } else {
             // spam = false is the majority class.
             majClass = "false";
-            nullErrorRate = numActualFalse / (double) totalNum;
+            nullErrorRate = numActualTrue / (double) totalNum;
         }
 
         //-------------------------------------+

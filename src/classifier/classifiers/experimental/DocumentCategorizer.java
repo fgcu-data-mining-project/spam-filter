@@ -36,8 +36,9 @@ public class DocumentCategorizer implements GenericClassifier {
 
     /**
      * Map of statistics of test data.
+     * // TODO Store test stats.
      */
-    private Map<String,Object> testStats;
+    //private Map<String,Object> testStats;
 
     //---------------------+
     //    CONSTRUCTORS    /
@@ -50,12 +51,12 @@ public class DocumentCategorizer implements GenericClassifier {
      */
     public DocumentCategorizer(List<TokenizedMessage> trainData) {
         // Create the maps to store stats.
-        testStats = new HashMap<>();
         trainStats = new HashMap<>();
 
         // TODO Make data set class to wrap list of messages and auto-calculate some stats?
 
         // Calculate initial statistics on training data.
+        // TOOD Move this into train(File) method?
         // Counts.
         // Total number of train messages.
         trainStats.put("numTotal", trainData.size());
@@ -77,11 +78,11 @@ public class DocumentCategorizer implements GenericClassifier {
         if (numActualTrue > numActualFalse) {
             // spam = true is the majority class.
             majClass = "true";
-            nullErrorRate = numActualTrue / (double) trainData.size();
+            nullErrorRate = numActualFalse / (double) trainData.size();
         } else {
             // spam = false is the majority class.
             majClass = "false";
-            nullErrorRate = numActualFalse / (double) trainData.size();
+            nullErrorRate = numActualTrue / (double) trainData.size();
         }
         trainStats.put("majorityClass", majClass);
         trainStats.put("nullErrorRate", nullErrorRate);
@@ -163,8 +164,6 @@ public class DocumentCategorizer implements GenericClassifier {
      */
     public void predictDataSet(List<TokenizedMessage> tkMessages) {
 
-        // TODO Implement.
-
         // Counts.
         int totalNum = 0;
         int numActualTrue = 0;
@@ -173,7 +172,6 @@ public class DocumentCategorizer implements GenericClassifier {
         int numTN = 0;
         int numFP = 0;
         int numFN = 0;
-        double nullErrorRate;
 
         // Classify test messages.
         System.out.println("============================================");
@@ -220,15 +218,17 @@ public class DocumentCategorizer implements GenericClassifier {
 
         // Calculate null error rate.
         String majClass = null;
+        double nullErrorRate;
         if (numActualTrue > numActualFalse) {
             // spam = true is the majority class.
             majClass = "true";
-            nullErrorRate = numActualTrue / (double) totalNum;
+            nullErrorRate = numActualFalse / (double) totalNum;
         } else {
             // spam = false is the majority class.
             majClass = "false";
-            nullErrorRate = numActualFalse / (double) totalNum;
+            nullErrorRate = numActualTrue / (double) totalNum;
         }
+
 
         //-------------------------------------+
         //    PRODUCE REPORT OF THE THINGS    /
@@ -260,7 +260,6 @@ public class DocumentCategorizer implements GenericClassifier {
         System.out.println(String.format("%-25s %f", "Precision: ", numTP/ (double) (numTP + numFP)));
         System.out.println(String.format("%-25s %f", "Recall: ", numTP / (double) (numTP + numFN)));
         System.out.println(String.format("%-25s %f", "Null Error Rate (Majority " + majClass + "): ", nullErrorRate));
-
     }
 
 
@@ -356,7 +355,7 @@ public class DocumentCategorizer implements GenericClassifier {
     }
 
     /**
-     * Print train data set statistics.
+     * Print train data set statistics to standard out.
      */
     private void printTrainStats() {
         // TODO Format output.
