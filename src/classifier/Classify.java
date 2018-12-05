@@ -7,6 +7,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import classifier.classifiers.core.KNN;
+import classifier.classifiers.core.NaiveBayes;
 import classifier.classifiers.experimental.DocumentCategorizer;
 import classifier.messagetypes.Message;
 import classifier.messagetypes.TokenizedMessage;
@@ -149,12 +150,16 @@ public class Classify implements Runnable {
             dc.predictDataSet(wrangledTestMessages);
         }
 
-        // TODO Refactor all of this away to appropriate places.
+        // Naive Bayes
         if (algorithm.toLowerCase().equals("nb")) {
             NaiveBayes nb = new NaiveBayes();
-            nb.train(wrangledTrainMessages);
+            nb.setVerbosity(verbose.length);
 
-//        int spamCount = tokenizedMessages.stream().filter(t ->  t.FILE_NAME.startsWith("s")).mapToInt(t -> 1).sum();
+//            nb.train(wrangledTestMessages);
+//            nb.test(wrangledTrainMessages);
+//
+            nb.train(wrangledTrainMessages);
+            nb.test(wrangledTestMessages);
         }
     }
 
