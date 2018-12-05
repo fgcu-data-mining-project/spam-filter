@@ -20,6 +20,7 @@ public class NaiveBayes {
   // level 0 - no tagging
   // level 2 - append labels to tokens
   private int tagging = 0;
+  private int verbosity;
   private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
   private Double alpha = 0.0; // see laplace smoothing (or additive smoothing)
   private Double alphaD = 1.0; // see laplace smoothing (or additive smoothing)
@@ -116,8 +117,12 @@ public class NaiveBayes {
     objectCounts = new HashMap<>();
     objectCounts.put("totalObjects", 0);
     objectCounts.put("totalTokens", 0);
+    verbosity = 0;
   }
 
+  public void setVerbosity(int verbosity){
+    this.verbosity = verbosity;
+  }
   /***
    * Disabling this for now. TODO: fix model saving and loading
    * /  /*
@@ -255,14 +260,15 @@ public class NaiveBayes {
         evaluation = "Correct";
         accuracy.put(label, accuracy.getOrDefault(label, 0) + 1);
       } else { evaluation = "Wrong"; }
-      System.out.println(m.getFILE_NAME() + " is " + label
-          + ". NB says it is " + nbPred + " [" + evaluation + "]");
+      if (verbosity >=2) System.out.printf("%-16s is %-6s NB says it is %-4s [ %7s ]\n",
+          m.getFILE_NAME(), label+".", nbPred, evaluation);
     });
-    System.out.printf("Spam Accuracy: %3d / %-3d = %-2.1f %%\n", accuracy.get("spam"), accuracy.get("totalspam"),
+
+    if (verbosity >=1) System.out.printf("Spam Accuracy:   %3d / %-3d = %-2.1f %%\n", accuracy.get("spam"), accuracy.get("totalspam"),
         (accuracy.get("spam") * 100.0)/accuracy.get("totalspam"));
-    System.out.printf("Ham Accuracy: %3d / %-3d = %-2.1f %%\n", accuracy.get("ham"), accuracy.get("totalham"),
+    if (verbosity >=1) System.out.printf("Ham Accuracy:    %3d / %-3d = %-2.1f %%\n", accuracy.get("ham"), accuracy.get("totalham"),
         (accuracy.get("ham") * 100.0)/accuracy.get("totalham"));
-    System.out.printf("Model Accuracy: %3d / %-3d = %-2.1f %%\n", accuracy.get("spam")+accuracy.get("ham"),
+    if (verbosity >=1) System.out.printf("Model Accuracy:  %3d / %-3d = %-2.1f %%\n", accuracy.get("spam")+accuracy.get("ham"),
         predictions.size(), ((accuracy.get("spam")+accuracy.get("ham")) * 100.0)/predictions.size());
   }
 
@@ -279,12 +285,14 @@ public class NaiveBayes {
       predictions.put(label,
           tks.stream() // need to change this back to parallelStream() when done testing
           .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
-//          .peek(t-> System.out.printf("%-16s",">"+t+"<"))
-          .map(tk -> getTokenLabelCount(tk,label) + alpha)
+          .map(tk -> {
+            if (verbosity >=3) System.out.printf("%-16s",">"+tk+"<");
+            return getTokenLabelCount(tk,label) + alpha;
+          })
           .map(tk -> tk/(objectCounts.get("totalTokens"+label) + alphaD))
 //          .reduce(baseProb, (labelProb,tkProb)-> labelProb + Math.log(tkProb))
           .reduce(baseProb, (labelProb,tkProb)-> {
-//            System.out.printf("[a] %-2.22e - [p] %-2.22f\n",labelProb, tkProb);
+            if (verbosity >=3) System.out.printf("[a] %-2.22e - [p] %-2.22f\n",labelProb, tkProb);
             return labelProb + Math.log(tkProb);
           }) * -1.0
       );
