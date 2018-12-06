@@ -9,41 +9,62 @@ public class NaiveBayes {
   // Maps token symbols to token objects
   private Map<String, Token<String>> tokens;
 
-  // <some_counter_label, current_value>
-  // counter_labels: 'spam', 'ham', 'totalObjects', 'totalTokens',
-  //  'totalTokensspam', 'totalTokensham'
-  private Map<String, Integer> objectCounts; // what a terrible name ;;
-  private Map<String, Double> pLabel; // p(label)= labelMessageCount / totalMessageCount
+  // objectCount ids: 'spam', 'ham', 'totalObjects', 'totalTokens',
+  //    'totalTokensspam', 'totalTokensham'
+  private Map<String, Integer> objectCounts; // <id, count>
+  private Map<String, Double> pLabel; // = labelMessageCount / totalMessageCount
 
-  /********* config settings ***********/
-  // specify the level of metadata to add
-  // level 0 - no tagging
-  // level 2 - append labels to tokens
+  /********* ***********  ***********  ***********
+   * NaiveBayes Class level configuration settings
+   ************  ***********  ***********  ***********/
+
+  /* tagging sets the level of metadata to add to tokens
+  * level 0 - no tagging
+  * level 2 - append labels to tokens
+  */
   private int tagging = 0;
+
+  /* verbosity controls the level of output detail
+  * see setVerbosity method for specific levels
+  */
   private int verbosity;
-  private final String MODEL_SAVE_DIR = "./NB_models"; //wont work in production
-  private Double alpha = 0.0; // see laplace smoothing (or additive smoothing)
-  private Double alphaD = 1.0; // see laplace smoothing (or additive smoothing)
 
+  // private final String MODEL_SAVE_DIR = "./NB_models"; // disabled for now
+  private Double alpha = 1.0;   // see laplace smoothing (or additive smoothing)
+  private Double alphaD = 1.0;  // see laplace smoothing (or additive smoothing)
+
+  /**
+   * Inner Class. Tokens class because this is Java and over-verbosity is
+   * a requirement per the software license.
+   * @param <T> Generic for fun
+   */
   private class Token <T> implements Comparable<Token<T>>{
-    T token; // token symbol
-    String activeLabel;
-    int total;
+    T token;              // token symbol
+    String activeLabel;   // Needed for comparing token objects.
+    int total;            // sum of all label counts
 
-    // String is a label of whatever you feel like counting
-    HashMap<String, Integer> count; // <label, frequency_count>
-    HashMap<String, Double> probability; // <descriptive_id, calculated_probability>
+    HashMap<String, Integer> count;       // <label, frequency_count>
+    HashMap<String, Double> probability;  // <id, calculated_probability>
 
+    /**
+     * Default Token object constructor.
+     * @param token
+     */
     Token(T token) {
       this.token = token;
-      this.activeLabel = "spam"; // TODO: I don't think I need this for every object. A model-level(or class) variable might suffice.
-      this.total = 0; // sum of all label counts: total count in the model
+      this.activeLabel = "spam"; // defaulting to spam for no good reason
+      this.total = 0;
       this.count = new HashMap<>();
       this.probability = new HashMap<>();
     }
 
-    // Increment the counter for specified label and total for the model.
-    // Returns the new count.
+
+    /**
+     * Increment the message/occurrence counter for specified label and total
+     * for the model.
+     * @param label String label of message the token is in
+     * @return int new count for the given label
+     */
     int increment(String label){
       this.total++;
       String l = label.toLowerCase();
@@ -51,66 +72,112 @@ public class NaiveBayes {
       return count.get(l);
     }
 
-    // return the count or 0 if there is no entry in the counts table
+
+    /**
+     * Return the number of messages for the given label set that this token
+     * occurs in or 0 if there is no entry in the counts table.
+     * @param label String label of the message set
+     * @return int number of the label messages this token appears in
+     */
     int getCount(String label){
       return count.getOrDefault(label.toLowerCase(), 0);
     }
 
-    // return sum of all label counts: total count in the model
+
+    /**
+     * Return the total number of messages this token occurs in.
+     * Same as count['spam'] + count['ham']
+     * @return int total count of token in all labels
+     */
     int getTotal(){ return total; }
 
-    // inserts the given value under the given label
-    void updateProbability(String label, Double p){
-      probability.put(label.toLowerCase(), p);
+
+    /**
+     * Inserts the given probability value under the given id.
+     * @param pTokenLabel String id of requested probability
+     * @param p Double probability associated with this label
+     */
+    void updateProbability(String pTokenLabel, Double p){
+      probability.put(pTokenLabel.toLowerCase(), p);
     }
 
-    // returns the value associated with the label or 0.0 if the label is not in the table
-    Double getProbabiltiy(String label){
-      return probability.getOrDefault(label.toLowerCase(), 0.0);
+
+    /**
+     * Returns a known probability for this token or 0.0 if the token wasn't
+     * found in the label's training set.
+     * Possible ids [pToken, pTokeSpam, pTokenHam]
+     * @param pTokenLabel String id of requested probability
+     * @return Double probability associated with this label
+     */
+    Double getProbabiltiy(String pTokenLabel){
+      return probability.getOrDefault(pTokenLabel.toLowerCase(), 0.0);
     }
 
+
+    /**
+     * Changes the label that Token objects are compared in.
+     * @param label
+     * @return String new activeLabel
+     */
     String setActiveLabel(String label){
       this.activeLabel = label.toLowerCase();
       return activeLabel;
     }
 
-    // be sure to set the activeLabel before comparing
+
+    /**
+     * Feature meant to be used in prediction. By selecting some number of the
+     * most 'interesting' tokens (those with the highest probability for the
+     * given label) the response time should improve without sacrificing
+     * accuracy too much.
+     * NOTE: Make sure activeLabel is set to the desired label before comparing.
+     * @param t other token object to compare this token with
+     * @return representative of the Token order based on polarity
+     */
+    @Override
     public int compareTo(Token<T> t){
       // if this is larger returns > 0
       // if equal returns 0
       // if this is less than t returns < 0
       return (int) (t.probability.getOrDefault(activeLabel,0.0)
-                    - this.probability.getOrDefault(activeLabel,0.0));
+                  - this.probability.getOrDefault(activeLabel,0.0));
     }
   }
 
-  // False if tokens map doesn't have an entry for this key (tk).
+
+  /**
+   * False if tokens map doesn't have an entry for this key (tk).
+   * @param tk
+   * @return true if there is a token object
+   */
   private Boolean tokenIsKnown(String tk){
     return (tokens.get(tk) != null);
   }
 
-  // False if not found in the token map OR token.count map doesn't have an
-  //   entry for this label.
+
+  /**
+   * Returns false if not found in the token map OR token.count map
+   * doesn't have an entry for this label.
+   * @param tk
+   * @param label
+   * @return true if there is a token object and has a token count for this label
+   */
   private Boolean tokenIsKnown(String tk, String label){
     return (tokens.get(tk) != null && tokens.get(tk).getCount(label) != 0);
   }
 
-  // default constructor. initializes to an untrained model
+
+  /**
+   * Default constructor. Initializes to an untrained model.
+   */
   public NaiveBayes() {
     reset();
   }
 
-  // Reload a trained model
-  public NaiveBayes (String modelName){
-    // TODO: load saved data into the appropriate fields
-    // TODO: refactor to use a better external datastore rather than flatfiles
-    String prefix = (modelName != null) ? modelName.toLowerCase().strip() : "default";
 
-    // initialize empty maps
-    reset();
-    //loadModel(modelName);
-  }
-
+  /**
+   * Clears prior data objects and resets control values to defaults
+   */
   private void reset(){
     tokens = new HashMap<>();
     pLabel = new HashMap<>();
@@ -120,68 +187,38 @@ public class NaiveBayes {
     verbosity = 0;
   }
 
+
+  /**
+   * Level of reporting details displayed (output is cumulative):
+   * 0 -- displays nothing atm
+   * 1 -- displays the prediction accuracy
+   * 2 -- for each message displays
+   *      [filename, label, predicted label, and if correct or wrong]
+   * 3 -- for each token displays
+   *      ['>' token '<', the accumulated probability, this token's probability]
+   *          ('>' and '<' are delimiters to bookend the token)
+   * @param verbosity
+   */
   public void setVerbosity(int verbosity){
     this.verbosity = verbosity;
   }
-  /***
-   * Disabling this for now. TODO: fix model saving and loading
-   * /  /*
- void loadModel (String modelName) {
-    // try to load the saved maps
-    Stream<String> fileStream;
-    try {
 
-      fileStream = Files.lines(Paths.get("$filename.ham"));
-      fileStream.forEachOrdered(line -> {
-        String s[] = line.split(",");
-        hamCounts.put(s[0], Integer.valueOf(s[1]));
-      });
 
-      // load the probabilities map
-      fileStream = Files.lines(Paths.get("$filename.probs"));
-      fileStream.forEachOrdered(line -> {
-        String s[] = line.split(",");
-        probabilities.put(s[0], Double.valueOf(s[1]));
-      });
-
-      fileStream.close();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  void saveModel (String modelName) {
-    // try to the current model
-    // Java is still an ugly horrible language...
-
-    Stream<String> fileStream;
-    try {
-
-      // create the save directory if it doesn't already exist
-      if (!Files.exists(Paths.get(MODEL_SAVE_DIR)))
-        Files.createDirectory(Paths.get(MODEL_SAVE_DIR));
-
-      // TODO: this doesn't have the correct output format
-      // save the ham countsMap
-      Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.ham"), hamCounts.toString());
-
-      // write the spam countsMap to the file
-      Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.spam"), spamCounts.toString());
-
-      // write the probabilities map to the file
-      Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.ham"), probabilities.toString());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }*/
-
-  // Train the model with a List of messages
+  /**
+   * Train the model with a List of message objects.
+   * @param messages message objects with tokens to process
+   */
   public void train(List<TokenizedMessage> messages) {
     messages.forEach(this::processMessage);
     calculatePriors();
   }
 
-  // Processes the tokens in a message and updates the proper tables for future use.
+
+  /**
+   * Processes the tokens in a message and updates the proper tables for
+   * future use.
+   * @param message message object with tokens to process
+   */
   private void processMessage(TokenizedMessage message) {
     // I'm cheating here...
     String label = (message.isSpam())? "spam" : "ham";
@@ -195,7 +232,6 @@ public class NaiveBayes {
 
     // Learn each distinct token, if tagging is >= 2 tokens are prepended with
     // (hopefully) unique strings for subject or body.
-    // WANT: Is there a better way to tag tokens?
     if(tagging < 2) {
       message.getAllTokens().forEach(t->learn(t,label));
     } else if(tagging >= 2) {
@@ -207,9 +243,14 @@ public class NaiveBayes {
     }
   }
 
-  // If this were to be used in a live environment it would need to learn
-  // from newly predicted messages. But here we will only be learning training
-  // messages.
+
+  /**
+   * If this were to be used in a live environment it would need to learn
+   * from newly predicted messages. But here we will only be learning training
+   * messages.
+   * @param tk    String the token to learn
+   * @param label String the class the token belongs to
+   */
   private void learn(String tk, String label){
     if (!tokens.containsKey(tk)) tokens.put(tk, new Token<>(tk));
     tokens.get(tk).increment(label);
@@ -217,12 +258,19 @@ public class NaiveBayes {
     objectCounts.put("totalTokens", objectCounts.get("totalTokens") +1);
   }
 
-  // use the default smoothing level
+
+  /**
+   * Uses the default Laplace smoothing level.
+   */
   private void calculatePriors(){
     calculatePriors(this.alpha);
   }
 
-  // update learned probabilities
+
+  /**
+   * Overloaded method to update learned probabilities.
+   * @param alpha level of Laplace smoothing to apply
+   */
   private void calculatePriors(Double alpha){
     Integer totalObjects = objectCounts.get("totalObjects");
 
@@ -243,38 +291,44 @@ public class NaiveBayes {
   }
 
 
-  // Process test messages and try to predict their labels based on the training data.
+  /**
+   * Process test messages and try to predict their labels based on the
+   * training data.
+   * @param messages ArrayList of messages to learn
+   */
   public void test(List<TokenizedMessage> messages){
     Map<TokenizedMessage, Map<String, Double>> predictions = new LinkedHashMap<>();
     Map<String, Integer> accuracy = new HashMap<>();
+    Map<String, String[]> messageReport = new HashMap<>();
 
-    messages.forEach(m->predictions.put(m,
-        predict(m.getAllTokens(),false)));
+    messages.forEach(m->predictions.put( m, predict(m.getAllTokens()) ));
 
     predictions.forEach((m,p) -> {
       String label = (m.isSpam()) ? "spam" : "ham";
-      String nbPred = (p.get("spam") > p.get("ham"))? "spam" : "ham";
-      String evaluation;
+      String nbPredicted = (p.get("spam") > p.get("ham"))? "spam" : "ham";
+
+      messageReport.put(m.getFILE_NAME(), new String[]{label,nbPredicted});
       accuracy.put("total"+label, accuracy.getOrDefault("total"+label, 0) + 1);
-      if (nbPred.equals(label)) {
-        evaluation = "Correct";
+
+      if (nbPredicted.equals(label)) {
         accuracy.put(label, accuracy.getOrDefault(label, 0) + 1);
-      } else { evaluation = "Wrong"; }
-      if (verbosity >=2) System.out.printf("%-16s is %-6s NB says it is %-4s [ %7s ]\n",
-          m.getFILE_NAME(), label+".", nbPred, evaluation);
+      }
     });
 
-    if (verbosity >=1) System.out.printf("Spam Accuracy:   %3d / %-3d = %-2.1f %%\n", accuracy.get("spam"), accuracy.get("totalspam"),
-        (accuracy.get("spam") * 100.0)/accuracy.get("totalspam"));
-    if (verbosity >=1) System.out.printf("Ham Accuracy:    %3d / %-3d = %-2.1f %%\n", accuracy.get("ham"), accuracy.get("totalham"),
-        (accuracy.get("ham") * 100.0)/accuracy.get("totalham"));
-    if (verbosity >=1) System.out.printf("Model Accuracy:  %3d / %-3d = %-2.1f %%\n", accuracy.get("spam")+accuracy.get("ham"),
-        predictions.size(), ((accuracy.get("spam")+accuracy.get("ham")) * 100.0)/predictions.size());
+    printMessageReport(messageReport);
+    printTestReport(predictions.size(), accuracy);
   }
 
 
-  private Map<String, Double> predict(List<String> tks, Boolean verbose){
+  /**
+   * Uses a List of tokens to evaluate for each label the probability the tokens
+   * will appear as together in a message.
+   * @param tks List of tokens
+   * @return Map of [label, probability]
+   */
+  private Map<String, Double> predict(List<String> tks){
     Map<String, Double> predictions = new HashMap<>(pLabel); //copies the keys(labels)
+    Map<String, Double[]> tokenCalculations = new LinkedHashMap<>();
 
     // factor that smooths probability distribution
     alphaD = alpha * objectCounts.get("totalTokens");
@@ -282,34 +336,58 @@ public class NaiveBayes {
     // calculate p(label|tokens) for all labels and store in predictions map
     for (String label : predictions.keySet()) {
       Double baseProb =  Math.log(1.0 * objectCounts.get(label)/objectCounts.get("totalObjects"));
+
       predictions.put(label,
-          tks.stream() // need to change this back to parallelStream() when done testing
-          .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
-          .map(tk -> {
-            if (verbosity >=3) System.out.printf("%-16s",">"+tk+"<");
-            return getTokenLabelCount(tk,label) + alpha;
-          })
-          .map(tk -> tk/(objectCounts.get("totalTokens"+label) + alphaD))
-//          .reduce(baseProb, (labelProb,tkProb)-> labelProb + Math.log(tkProb))
-          .reduce(baseProb, (labelProb,tkProb)-> {
-            if (verbosity >=3) System.out.printf("[a] %-2.22e - [p] %-2.22f\n",labelProb, tkProb);
-            return labelProb + Math.log(tkProb);
-          }) * -1.0
+          tks.stream() // can't do parallelStream() and retain ordered print data
+              .filter(tk->tokenIsKnown(tk, label)) // skip tokens we haven't seen before
+              .map(tk -> {
+                Map<String, Double> m = new HashMap<>();
+                m.put(tk, getTokenLabelCount(tk,label) + alpha);
+                return m;
+              })
+              .peek(m -> {
+                String id = m.keySet().toArray()[0].toString();
+                m.put(id, m.get(id)/(objectCounts.get("totalTokens"+label) + alphaD));
+              })
+              .reduce(baseProb,(labelProb,m)-> {
+                String id = m.keySet().toArray()[0].toString();
+                tokenCalculations.put(id, new Double[]{labelProb, m.get(id)});
+                return labelProb + Math.log(m.get(id));
+              }, Double::sum) * -1.0
       );
+      System.out.println();
     }
 
-    // Sorted in desc order by value
+    printCalculationsReport(tokenCalculations);
     return predictions;
   }
 
-  Integer getTokenLabelCount(String token, String label){
+  /**
+   * Gets the number of times this token appears in this label's
+   * training messages
+   * @param token
+   * @param label
+   * @return number of times token appears in this label
+   */
+  private Integer getTokenLabelCount(String token, String label){
     return tokens.get(token).getCount(label);
   }
 
+  /**
+   * Gets the prior calculated p(token|label) probability value.
+   * @param token
+   * @param label
+   * @return probability of token occurring for this label
+   */
   Double getpTokenLabel(String token, String label){
     return tokens.get(token).getProbabiltiy("pToken" + label);
   }
 
+  /**
+   * Gets the prior calculated p(label) probability value.
+   * @param label
+   * @return probability of label occurring in this model
+   */
   Double getpLabel(String label){
     return pLabel.get(label);
   }
@@ -318,8 +396,124 @@ public class NaiveBayes {
   // Helper functions
   //******************
 
-  void printTokenReport(){
-    // TODO
+  /**
+   * Prints the probability calculations for each token and the accumulated value
+   * @param tokenCalculations Map <token symbol, [accumulatedProb, tkProb]>
+   */
+  private void printCalculationsReport(Map<String, Double[]> tokenCalculations) {
+    if (verbosity >= 3) {
+      tokenCalculations.forEach((tk,probs)-> {
+        System.out.printf("%-16s[a] %-2.22e - [p] %-2.22f\n",
+          ">" + tk + "<", probs[0], probs[1]);
+      });
+    }
   }
 
+  /**
+   * Prints evaluation statistics for each file tested.
+   * @param messageReport Map <fileName, label, predictedLabel>
+   */
+  private void printMessageReport(Map<String, String[]> messageReport) {
+    if (verbosity >= 2) {
+      messageReport.forEach((fileName, labels) ->
+          System.out.printf("%-17s is %-6s NB says it is %-4s [ %7s ]\n",
+              fileName, labels[0] + ".", labels[1],
+              (labels[1].equals(labels[0])) ? "Correct" : "Wrong")
+      );
+    }
+  }
+
+  /**
+   * Prints statistics on the final results of testing.
+   * @param messageCount int number of messages processed in testing
+   * @param accuracy Map <label, labelMessageCount>
+   */
+  private void printTestReport(int messageCount, Map<String, Integer> accuracy){
+    if (verbosity >=1) {
+        System.out.printf("Spam Accuracy:   %3d / %-3d = %-2.1f %%\n",
+          accuracy.get("spam"), accuracy.get("totalspam"),
+          (accuracy.get("spam") * 100.0)/accuracy.get("totalspam"));
+
+      System.out.printf("Ham Accuracy:    %3d / %-3d = %-2.1f %%\n",
+          accuracy.get("ham"), accuracy.get("totalham"),
+          (accuracy.get("ham") * 100.0)/accuracy.get("totalham"));
+
+      System.out.printf("Model Accuracy:  %3d / %-3d = %-2.1f %%\n",
+          accuracy.get("spam")+accuracy.get("ham"), messageCount,
+          ((accuracy.get("spam")+accuracy.get("ham")) * 100.0)/messageCount);
+    }
+  }
+
+  /* **************************************************************************
+   * A model saving and loading feature was part of the original design,
+   * due to time constraints we were unable to complete it. Leaving this code
+   * for possible future use.
+   ---------------------------------------------------------------------------
+
+  / **
+   * Constructor that reloads a previously trained model from a file store.
+   * @param modelName name used to identify the model and used for filenames.
+   * /
+  public NaiveBayes (String modelName){
+    // TO DO: load saved data into the appropriate fields
+    // TO DO: refactor to use a better external datastore rather than flatfiles
+    String prefix = (modelName != null) ? modelName.toLowerCase().strip() : "default";
+
+    // initialize empty maps
+    reset();
+    loadModel(modelName);
+  }
+
+   void loadModel (String modelName) {
+   // try to load the saved maps
+   Stream<String> fileStream;
+   try {
+
+   fileStream = Files.lines(Paths.get("$filename.ham"));
+   fileStream.forEachOrdered(line -> {
+   String s[] = line.split(",");
+   hamCounts.put(s[0], Integer.valueOf(s[1]));
+   });
+
+   // load the probabilities map
+   fileStream = Files.lines(Paths.get("$filename.probs"));
+   fileStream.forEachOrdered(line -> {
+   String s[] = line.split(",");
+   probabilities.put(s[0], Double.valueOf(s[1]));
+   });
+
+   fileStream.close();
+   } catch (IOException e) {
+   e.printStackTrace();
+   }
+   }
+
+   void saveModel (String modelName) {
+   // try to the current model
+   // Java is still an ugly horrible language...
+
+   Stream<String> fileStream;
+   try {
+
+   // create the save directory if it doesn't already exist
+   if (!Files.exists(Paths.get(MODEL_SAVE_DIR)))
+   Files.createDirectory(Paths.get(MODEL_SAVE_DIR));
+
+   // TODO: this doesn't have the correct output format
+   // save the ham countsMap
+   Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.ham"),
+            hamCounts.toString());
+
+   // write the spam countsMap to the file
+   Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.spam"),
+            spamCounts.toString());
+
+   // write the probabilities map to the file
+   Files.writeString(Paths.get(MODEL_SAVE_DIR,"$filename.ham"),
+          probabilities.toString());
+   } catch (IOException e) {
+   e.printStackTrace();
+   }
+   }
+   * **************************************************************************/
 }

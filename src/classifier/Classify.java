@@ -155,11 +155,11 @@ public class Classify implements Runnable {
             NaiveBayes nb = new NaiveBayes();
             nb.setVerbosity(verbose.length);
 
-//            nb.train(wrangledTestMessages);
-//            nb.test(wrangledTrainMessages);
-//
-            nb.train(wrangledTrainMessages);
-            nb.test(wrangledTestMessages);
+//            nb.train(wrangledTrainMessages);
+//            nb.test(wrangledTestMessages);
+
+            nb.train(wrangledTestMessages);
+            nb.test(wrangledTrainMessages);
         }
     }
 
